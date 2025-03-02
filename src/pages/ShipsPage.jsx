@@ -13,6 +13,7 @@ import {
   Legend,
 } from "chart.js";
 import { Ship, Anchor, Navigation } from "lucide-react";
+import { motion } from "framer-motion";
 
 // Register ChartJS components
 ChartJS.register(
@@ -293,7 +294,13 @@ const ShipsPage = () => {
 
         {/* Ship Details */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-gray-800 rounded-lg p-6">
+          <motion.div
+            className="bg-gray-800 bg-opacity-50 backdrop-blur-md overflow-hidden shadow-lg rounded-xl border border-gray-700 p-6"
+            whileHover={{
+              y: -5,
+              boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.5)",
+            }}
+          >
             <div className="flex items-center mb-4">
               <Ship className="w-6 h-6 mr-3" style={{ color: "#6366f1" }} />
               <h3 className="text-lg font-semibold">Ship Details</h3>
@@ -311,9 +318,15 @@ const ShipsPage = () => {
                 <span className="text-white">{selectedShip.speed} knots</span>
               </p>
             </div>
-          </div>
+          </motion.div>
 
-          <div className="bg-gray-800 rounded-lg p-6">
+          <motion.div
+            className="bg-gray-800 bg-opacity-50 backdrop-blur-md overflow-hidden shadow-lg rounded-xl border border-gray-700 p-6"
+            whileHover={{
+              y: -5,
+              boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.5)",
+            }}
+          >
             <div className="flex items-center mb-4">
               <Navigation
                 className="w-6 h-6 mr-3"
@@ -337,9 +350,15 @@ const ShipsPage = () => {
                 </span>
               </p>
             </div>
-          </div>
+          </motion.div>
 
-          <div className="bg-gray-800 rounded-lg p-6">
+          <motion.div
+            className="bg-gray-800 bg-opacity-50 backdrop-blur-md overflow-hidden shadow-lg rounded-xl border border-gray-700 p-6"
+            whileHover={{
+              y: -5,
+              boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.5)",
+            }}
+          >
             <div className="flex items-center mb-4">
               <Anchor className="w-6 h-6 mr-3" style={{ color: "#EC4899" }} />
               <h3 className="text-lg font-semibold">Status</h3>
@@ -356,13 +375,13 @@ const ShipsPage = () => {
                 <span>{selectedShip.status}</span>
               </div>
             </div>
-          </div>
+          </motion.div>
         </div>
 
         {/* Performance Charts */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
           {/* Performance Metrics */}
-          <div className="bg-gray-800 rounded-lg p-6">
+          <div className="bg-gray-800 bg-opacity-50 backdrop-blur-md overflow-hidden shadow-lg rounded-xl border border-gray-700 p-6">
             <h3 className="text-lg font-semibold mb-4">Performance Metrics</h3>
             <div className="h-[300px]">
               <Line
@@ -373,7 +392,7 @@ const ShipsPage = () => {
           </div>
 
           {/* Cargo Distribution */}
-          <div className="bg-gray-800 rounded-lg p-6">
+          <div className="bg-gray-800 bg-opacity-50 backdrop-blur-md overflow-hidden shadow-lg rounded-xl border border-gray-700 p-6">
             <h3 className="text-lg font-semibold mb-4">Cargo Distribution</h3>
             <div className="h-[300px]">
               <Doughnut
@@ -385,7 +404,7 @@ const ShipsPage = () => {
         </div>
 
         {/* Maintenance Chart */}
-        <div className="bg-gray-800 rounded-lg p-6">
+        <div className="bg-gray-800 bg-opacity-50 backdrop-blur-md overflow-hidden shadow-lg rounded-xl border border-gray-700 p-6">
           <h3 className="text-lg font-semibold mb-4">
             Maintenance Hours by Department
           </h3>

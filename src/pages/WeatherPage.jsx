@@ -11,6 +11,7 @@ import {
   Legend,
 } from "chart.js";
 import { Cloud, Wind, Thermometer, Droplets } from "lucide-react";
+import StatCard from "../components/common/StatCard";
 
 // Register ChartJS components
 ChartJS.register(
@@ -150,45 +151,35 @@ const WeatherPage = () => {
 
         {/* Current Weather Overview */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <div className="bg-gray-800 rounded-lg p-6">
-            <div className="flex items-center mb-4">
-              <Thermometer
-                className="w-6 h-6 mr-3"
-                style={{ color: "#6366f1" }}
-              />
-              <h3 className="text-lg font-semibold">Temperature</h3>
-            </div>
-            <div className="text-3xl font-bold">22°C</div>
-          </div>
-
-          <div className="bg-gray-800 rounded-lg p-6">
-            <div className="flex items-center mb-4">
-              <Wind className="w-6 h-6 mr-3" style={{ color: "#8B5CF6" }} />
-              <h3 className="text-lg font-semibold">Wind Speed</h3>
-            </div>
-            <div className="text-3xl font-bold">15 knots</div>
-          </div>
-
-          <div className="bg-gray-800 rounded-lg p-6">
-            <div className="flex items-center mb-4">
-              <Cloud className="w-6 h-6 mr-3" style={{ color: "#EC4899" }} />
-              <h3 className="text-lg font-semibold">Conditions</h3>
-            </div>
-            <div className="text-3xl font-bold">Partly Cloudy</div>
-          </div>
-
-          <div className="bg-gray-800 rounded-lg p-6">
-            <div className="flex items-center mb-4">
-              <Droplets className="w-6 h-6 mr-3" style={{ color: "#10B981" }} />
-              <h3 className="text-lg font-semibold">Humidity</h3>
-            </div>
-            <div className="text-3xl font-bold">65%</div>
-          </div>
+          <StatCard
+            name="Temperature"
+            icon={Thermometer}
+            value="22°C"
+            color="#6366f1"
+          />
+          <StatCard
+            name="Wind Speed"
+            icon={Wind}
+            value="15 knots"
+            color="#8B5CF6"
+          />
+          <StatCard
+            name="Conditions"
+            icon={Cloud}
+            value="Partly Cloudy"
+            color="#EC4899"
+          />
+          <StatCard
+            name="Humidity"
+            icon={Droplets}
+            value="65%"
+            color="#10B981"
+          />
         </div>
 
         {/* Weather Graphs */}
         <div className="grid grid-cols-1 gap-6">
-          <div className="bg-gray-800 rounded-lg p-6">
+          <div className="bg-gray-800 bg-opacity-50 backdrop-blur-md overflow-hidden shadow-lg rounded-xl border border-gray-700 p-6">
             <h3 className="text-lg font-semibold mb-4">Temperature Trend</h3>
             <div className="h-[300px]">
               <Line
@@ -198,14 +189,14 @@ const WeatherPage = () => {
             </div>
           </div>
 
-          <div className="bg-gray-800 rounded-lg p-6">
+          <div className="bg-gray-800 bg-opacity-50 backdrop-blur-md overflow-hidden shadow-lg rounded-xl border border-gray-700 p-6">
             <h3 className="text-lg font-semibold mb-4">Wind Speed Trend</h3>
             <div className="h-[300px]">
               <Line data={MOCK_WEATHER_DATA.wind} options={chartOptions} />
             </div>
           </div>
 
-          <div className="bg-gray-800 rounded-lg p-6">
+          <div className="bg-gray-800 bg-opacity-50 backdrop-blur-md overflow-hidden shadow-lg rounded-xl border border-gray-700 p-6">
             <h3 className="text-lg font-semibold mb-4">Humidity Trend</h3>
             <div className="h-[300px]">
               <Line data={MOCK_WEATHER_DATA.humidity} options={chartOptions} />
