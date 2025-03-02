@@ -2,35 +2,35 @@ import { Route, Routes } from "react-router-dom";
 
 import Sidebar from "./components/common/Sidebar";
 
-import OverviewPage from "./pages/OverviewPage";
-import ProductsPage from "./pages/ProductsPage";
+import DashboardPage from "./pages/DashboardPage";
+import ShipsPage from "./pages/ShipsPage";
 import UsersPage from "./pages/UsersPage";
-import SalesPage from "./pages/SalesPage";
-import OrdersPage from "./pages/OrdersPage";
-import AnalyticsPage from "./pages/AnalyticsPage";
+import WeatherPage from "./pages/WeatherPage";
 import SettingsPage from "./pages/SettingsPage";
 
 function App() {
-	return (
-		<div className='flex h-screen bg-gray-900 text-gray-100 overflow-hidden'>
-			{/* BG */}
-			<div className='fixed inset-0 z-0'>
-				<div className='absolute inset-0 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 opacity-80' />
-				<div className='absolute inset-0 backdrop-blur-sm' />
-			</div>
+  return (
+    <div className="flex h-screen bg-gray-900 text-gray-100">
+      {/* Background with blur */}
+      <div className="fixed inset-0 z-0">
+        <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 opacity-80" />
+      </div>
 
-			<Sidebar />
-			<Routes>
-				<Route path='/' element={<OverviewPage />} />
-				<Route path='/products' element={<ProductsPage />} />
-				<Route path='/users' element={<UsersPage />} />
-				<Route path='/sales' element={<SalesPage />} />
-				<Route path='/orders' element={<OrdersPage />} />
-				<Route path='/analytics' element={<AnalyticsPage />} />
-				<Route path='/settings' element={<SettingsPage />} />
-			</Routes>
-		</div>
-	);
+      {/* Content */}
+      <div className="relative z-10 flex w-full h-full">
+        <Sidebar />
+        <main className="flex-1 relative overflow-auto">
+          <Routes>
+            <Route path="/" element={<DashboardPage />} />
+            <Route path="/ships" element={<ShipsPage />} />
+            <Route path="/users" element={<UsersPage />} />
+            <Route path="/weather" element={<WeatherPage />} />
+            <Route path="/settings" element={<SettingsPage />} />
+          </Routes>
+        </main>
+      </div>
+    </div>
+  );
 }
 
 export default App;
