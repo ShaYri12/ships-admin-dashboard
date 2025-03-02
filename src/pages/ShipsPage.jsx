@@ -1,11 +1,13 @@
 import React, { useState } from "react";
-import { Line } from "react-chartjs-2";
+import { Line, Bar, Doughnut } from "react-chartjs-2";
 import {
   Chart as ChartJS,
   CategoryScale,
   LinearScale,
   PointElement,
   LineElement,
+  BarElement,
+  ArcElement,
   Title,
   Tooltip,
   Legend,
@@ -18,6 +20,8 @@ ChartJS.register(
   LinearScale,
   PointElement,
   LineElement,
+  BarElement,
+  ArcElement,
   Title,
   Tooltip,
   Legend
@@ -44,22 +48,226 @@ const MOCK_SHIPS = [
           label: "Fuel Consumption (tons)",
           data: [65, 59, 80, 81, 56, 55],
           borderColor: "#6366f1",
+          backgroundColor: "rgba(99, 102, 241, 0.1)",
           tension: 0.4,
         },
         {
           label: "Speed (knots)",
           data: [28, 48, 40, 19, 86, 27],
           borderColor: "#8B5CF6",
+          backgroundColor: "rgba(139, 92, 246, 0.1)",
           tension: 0.4,
         },
       ],
     },
+    cargoData: {
+      labels: ["Container", "Bulk", "Liquid", "Vehicle", "Other"],
+      datasets: [
+        {
+          data: [300, 150, 100, 200, 50],
+          backgroundColor: [
+            "rgba(99, 102, 241, 0.8)",
+            "rgba(139, 92, 246, 0.8)",
+            "rgba(236, 72, 153, 0.8)",
+            "rgba(16, 185, 129, 0.8)",
+            "rgba(245, 158, 11, 0.8)",
+          ],
+        },
+      ],
+    },
+    maintenanceData: {
+      labels: [
+        "Engine",
+        "Hull",
+        "Electronics",
+        "Safety",
+        "Navigation",
+        "Other",
+      ],
+      datasets: [
+        {
+          label: "Maintenance Hours",
+          data: [24, 12, 8, 16, 10, 6],
+          backgroundColor: "rgba(99, 102, 241, 0.8)",
+        },
+      ],
+    },
   },
-  // Add more mock ships here
+  {
+    id: 2,
+    name: "Tanker Beta",
+    type: "Oil Tanker",
+    status: "Docked",
+    speed: 0,
+    destination: "Hamburg",
+    eta: "2024-03-15",
+    position: {
+      latitude: 48.8566,
+      longitude: 2.3522,
+    },
+    performanceData: {
+      labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun"],
+      datasets: [
+        {
+          label: "Fuel Consumption (tons)",
+          data: [45, 52, 48, 58, 50, 48],
+          borderColor: "#6366f1",
+          backgroundColor: "rgba(99, 102, 241, 0.1)",
+          tension: 0.4,
+        },
+        {
+          label: "Speed (knots)",
+          data: [22, 25, 23, 20, 24, 21],
+          borderColor: "#8B5CF6",
+          backgroundColor: "rgba(139, 92, 246, 0.1)",
+          tension: 0.4,
+        },
+      ],
+    },
+    cargoData: {
+      labels: ["Crude Oil", "Refined Oil", "Chemicals", "Empty"],
+      datasets: [
+        {
+          data: [450, 200, 150, 100],
+          backgroundColor: [
+            "rgba(99, 102, 241, 0.8)",
+            "rgba(139, 92, 246, 0.8)",
+            "rgba(236, 72, 153, 0.8)",
+            "rgba(16, 185, 129, 0.8)",
+          ],
+        },
+      ],
+    },
+    maintenanceData: {
+      labels: [
+        "Engine",
+        "Hull",
+        "Electronics",
+        "Safety",
+        "Navigation",
+        "Other",
+      ],
+      datasets: [
+        {
+          label: "Maintenance Hours",
+          data: [30, 15, 10, 20, 12, 8],
+          backgroundColor: "rgba(139, 92, 246, 0.8)",
+        },
+      ],
+    },
+  },
+  {
+    id: 3,
+    name: "Container Gamma",
+    type: "Container Ship",
+    status: "En Route",
+    speed: 18,
+    destination: "Singapore",
+    eta: "2024-03-20",
+    position: {
+      latitude: 1.3521,
+      longitude: 103.8198,
+    },
+    performanceData: {
+      labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun"],
+      datasets: [
+        {
+          label: "Fuel Consumption (tons)",
+          data: [75, 70, 72, 68, 73, 71],
+          borderColor: "#6366f1",
+          backgroundColor: "rgba(99, 102, 241, 0.1)",
+          tension: 0.4,
+        },
+        {
+          label: "Speed (knots)",
+          data: [30, 32, 31, 29, 33, 30],
+          borderColor: "#8B5CF6",
+          backgroundColor: "rgba(139, 92, 246, 0.1)",
+          tension: 0.4,
+        },
+      ],
+    },
+    cargoData: {
+      labels: ["Electronics", "Textiles", "Machinery", "Food", "Other"],
+      datasets: [
+        {
+          data: [400, 300, 250, 200, 150],
+          backgroundColor: [
+            "rgba(99, 102, 241, 0.8)",
+            "rgba(139, 92, 246, 0.8)",
+            "rgba(236, 72, 153, 0.8)",
+            "rgba(16, 185, 129, 0.8)",
+            "rgba(245, 158, 11, 0.8)",
+          ],
+        },
+      ],
+    },
+    maintenanceData: {
+      labels: [
+        "Engine",
+        "Hull",
+        "Electronics",
+        "Safety",
+        "Navigation",
+        "Other",
+      ],
+      datasets: [
+        {
+          label: "Maintenance Hours",
+          data: [28, 14, 12, 18, 15, 10],
+          backgroundColor: "rgba(236, 72, 153, 0.8)",
+        },
+      ],
+    },
+  },
 ];
 
 const ShipsPage = () => {
   const [selectedShip, setSelectedShip] = useState(MOCK_SHIPS[0]);
+
+  const chartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    scales: {
+      y: {
+        beginAtZero: true,
+        grid: {
+          color: "rgba(255, 255, 255, 0.1)",
+        },
+        ticks: {
+          color: "rgba(255, 255, 255, 0.8)",
+        },
+      },
+      x: {
+        grid: {
+          color: "rgba(255, 255, 255, 0.1)",
+        },
+        ticks: {
+          color: "rgba(255, 255, 255, 0.8)",
+        },
+      },
+    },
+    plugins: {
+      legend: {
+        labels: {
+          color: "rgba(255, 255, 255, 0.8)",
+        },
+      },
+    },
+  };
+
+  const doughnutOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: "right",
+        labels: {
+          color: "rgba(255, 255, 255, 0.8)",
+        },
+      },
+    },
+  };
 
   return (
     <div className="p-8">
@@ -151,43 +359,38 @@ const ShipsPage = () => {
           </div>
         </div>
 
-        {/* Performance Graphs */}
+        {/* Performance Charts */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+          {/* Performance Metrics */}
+          <div className="bg-gray-800 rounded-lg p-6">
+            <h3 className="text-lg font-semibold mb-4">Performance Metrics</h3>
+            <div className="h-[300px]">
+              <Line
+                data={selectedShip.performanceData}
+                options={chartOptions}
+              />
+            </div>
+          </div>
+
+          {/* Cargo Distribution */}
+          <div className="bg-gray-800 rounded-lg p-6">
+            <h3 className="text-lg font-semibold mb-4">Cargo Distribution</h3>
+            <div className="h-[300px]">
+              <Doughnut
+                data={selectedShip.cargoData}
+                options={doughnutOptions}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Maintenance Chart */}
         <div className="bg-gray-800 rounded-lg p-6">
-          <h3 className="text-lg font-semibold mb-4">Performance Metrics</h3>
-          <div className="h-[400px]">
-            <Line
-              data={selectedShip.performanceData}
-              options={{
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                  y: {
-                    beginAtZero: true,
-                    grid: {
-                      color: "rgba(255, 255, 255, 0.1)",
-                    },
-                    ticks: {
-                      color: "rgba(255, 255, 255, 0.8)",
-                    },
-                  },
-                  x: {
-                    grid: {
-                      color: "rgba(255, 255, 255, 0.1)",
-                    },
-                    ticks: {
-                      color: "rgba(255, 255, 255, 0.8)",
-                    },
-                  },
-                },
-                plugins: {
-                  legend: {
-                    labels: {
-                      color: "rgba(255, 255, 255, 0.8)",
-                    },
-                  },
-                },
-              }}
-            />
+          <h3 className="text-lg font-semibold mb-4">
+            Maintenance Hours by Department
+          </h3>
+          <div className="h-[300px]">
+            <Bar data={selectedShip.maintenanceData} options={chartOptions} />
           </div>
         </div>
       </div>
