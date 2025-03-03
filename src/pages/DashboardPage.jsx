@@ -3,7 +3,7 @@ import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import { Ship, Anchor, Navigation, Fuel, Wind } from "lucide-react";
 import { motion } from "framer-motion";
-import StatCard from "../components/common/StatCard";
+import StatCard from "../components/shared/StatCard";
 
 // Mock data - will be replaced with API data later
 const MOCK_SHIPS = [

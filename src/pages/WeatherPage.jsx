@@ -11,7 +11,7 @@ import {
   Legend,
 } from "chart.js";
 import { Cloud, Wind, Thermometer, Droplets } from "lucide-react";
-import StatCard from "../components/common/StatCard";
+import StatCard from "../components/shared/StatCard";
 
 // Register ChartJS components
 ChartJS.register(
