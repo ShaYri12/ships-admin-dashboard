@@ -77,14 +77,11 @@ const DashboardPage = () => {
           <h2 className="text-xl font-semibold mb-4">Ship Locations</h2>
           <div className="h-[400px] rounded-lg overflow-hidden">
             <MapContainer
-              center={[20, 0]}
-              zoom={2}
+              center={[50, 0]}
+              zoom={3.5}
               style={{ height: "100%", width: "100%" }}
             >
-              <TileLayer
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-              />
+              <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
               {MOCK_SHIPS.map((ship) => (
                 <Marker key={ship.id} position={ship.position}>
                   <Popup>
