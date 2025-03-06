@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Line, Bar, Doughnut } from "react-chartjs-2";
+import { Line, Bar, Doughnut, Pie } from "react-chartjs-2";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -12,7 +12,7 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
-import { Ship, Anchor, Navigation } from "lucide-react";
+import { Ship, Anchor, Navigation, ChevronDown } from "lucide-react";
 import { motion } from "framer-motion";
 
 // Register ChartJS components
@@ -93,6 +93,87 @@ const MOCK_SHIPS = [
         },
       ],
     },
+    wingRotationData: {
+      labels: Array.from({ length: 24 }, (_, i) => i * 10),
+      datasets: [
+        {
+          label: "Wing Rotation Angle",
+          data: [
+            0, 5, 200, 8, 10, 15, 20, 55, 12, 8, 5, 3, 2, 150, 8, 5, 3, 2, 1, 0,
+            2, 3, 5, 8,
+          ],
+          borderColor: "#6366f1",
+          backgroundColor: "rgb(99, 102, 241)",
+          barThickness: 8,
+        },
+      ],
+    },
+    windSpeedData: {
+      labels: [
+        "2024-10-01",
+        "2024-11-01",
+        "2024-12-01",
+        "2025-01-01",
+        "2025-02-01",
+      ],
+      datasets: [
+        {
+          label: "Wind Speed",
+          data: [0, 0, 12, 2, 0],
+          borderColor: "#8B5CF6",
+          backgroundColor: "rgba(139, 92, 246, 0.1)",
+          tension: 0.4,
+        },
+      ],
+    },
+    cogData: {
+      labels: [
+        "2024-10-01",
+        "2024-11-01",
+        "2024-12-01",
+        "2025-01-01",
+        "2025-02-01",
+      ],
+      datasets: [
+        {
+          label: "COG",
+          data: [0, 0, 300, 250, 240],
+          borderColor: "#EC4899",
+          backgroundColor: "rgba(236, 72, 153, 0.1)",
+          tension: 0.4,
+        },
+      ],
+    },
+    sogData: {
+      labels: [
+        "2024-10-01",
+        "2024-11-01",
+        "2024-12-01",
+        "2025-01-01",
+        "2025-02-01",
+      ],
+      datasets: [
+        {
+          label: "SOG",
+          data: [0, 0, 10, 2, 8],
+          borderColor: "#10B981",
+          backgroundColor: "rgba(16, 185, 129, 0.1)",
+          tension: 0.4,
+        },
+      ],
+    },
+    wingUpDownData: {
+      labels: ["Up", "Down"],
+      datasets: [
+        {
+          data: [85, 15],
+          backgroundColor: [
+            "rgba(99, 102, 241, 0.8)",
+            "rgba(236, 72, 153, 0.8)",
+          ],
+        },
+      ],
+    },
   },
   {
     id: 2,
@@ -153,6 +234,87 @@ const MOCK_SHIPS = [
           label: "Maintenance Hours",
           data: [30, 15, 10, 20, 12, 8],
           backgroundColor: "rgba(139, 92, 246, 0.8)",
+        },
+      ],
+    },
+    wingRotationData: {
+      labels: Array.from({ length: 24 }, (_, i) => i * 10),
+      datasets: [
+        {
+          label: "Wing Rotation Angle",
+          data: [
+            10, 15, 180, 12, 15, 20, 25, 45, 15, 10, 8, 5, 3, 140, 10, 8, 5, 3,
+            2, 1, 3, 5, 8, 10,
+          ],
+          borderColor: "#6366f1",
+          backgroundColor: "rgb(99, 102, 241)",
+          barThickness: 8,
+        },
+      ],
+    },
+    windSpeedData: {
+      labels: [
+        "2024-10-01",
+        "2024-11-01",
+        "2024-12-01",
+        "2025-01-01",
+        "2025-02-01",
+      ],
+      datasets: [
+        {
+          label: "Wind Speed",
+          data: [0, 0, 14, 3, 0],
+          borderColor: "#8B5CF6",
+          backgroundColor: "rgba(139, 92, 246, 0.1)",
+          tension: 0.4,
+        },
+      ],
+    },
+    cogData: {
+      labels: [
+        "2024-10-01",
+        "2024-11-01",
+        "2024-12-01",
+        "2025-01-01",
+        "2025-02-01",
+      ],
+      datasets: [
+        {
+          label: "COG",
+          data: [0, 0, 280, 230, 220],
+          borderColor: "#EC4899",
+          backgroundColor: "rgba(236, 72, 153, 0.1)",
+          tension: 0.4,
+        },
+      ],
+    },
+    sogData: {
+      labels: [
+        "2024-10-01",
+        "2024-11-01",
+        "2024-12-01",
+        "2025-01-01",
+        "2025-02-01",
+      ],
+      datasets: [
+        {
+          label: "SOG",
+          data: [0, 0, 12, 3, 9],
+          borderColor: "#10B981",
+          backgroundColor: "rgba(16, 185, 129, 0.1)",
+          tension: 0.4,
+        },
+      ],
+    },
+    wingUpDownData: {
+      labels: ["Up", "Down"],
+      datasets: [
+        {
+          data: [80, 20],
+          backgroundColor: [
+            "rgba(99, 102, 241, 0.8)",
+            "rgba(236, 72, 153, 0.8)",
+          ],
         },
       ],
     },
@@ -220,6 +382,87 @@ const MOCK_SHIPS = [
         },
       ],
     },
+    wingRotationData: {
+      labels: Array.from({ length: 24 }, (_, i) => i * 10),
+      datasets: [
+        {
+          label: "Wing Rotation Angle",
+          data: [
+            5, 10, 160, 15, 20, 25, 30, 50, 20, 15, 10, 8, 5, 130, 15, 10, 8, 5,
+            3, 2, 5, 8, 10, 12,
+          ],
+          borderColor: "#6366f1",
+          backgroundColor: "rgb(99, 102, 241)",
+          barThickness: 8,
+        },
+      ],
+    },
+    windSpeedData: {
+      labels: [
+        "2024-10-01",
+        "2024-11-01",
+        "2024-12-01",
+        "2025-01-01",
+        "2025-02-01",
+      ],
+      datasets: [
+        {
+          label: "Wind Speed",
+          data: [0, 0, 16, 4, 0],
+          borderColor: "#8B5CF6",
+          backgroundColor: "rgba(139, 92, 246, 0.1)",
+          tension: 0.4,
+        },
+      ],
+    },
+    cogData: {
+      labels: [
+        "2024-10-01",
+        "2024-11-01",
+        "2024-12-01",
+        "2025-01-01",
+        "2025-02-01",
+      ],
+      datasets: [
+        {
+          label: "COG",
+          data: [0, 0, 320, 270, 260],
+          borderColor: "#EC4899",
+          backgroundColor: "rgba(236, 72, 153, 0.1)",
+          tension: 0.4,
+        },
+      ],
+    },
+    sogData: {
+      labels: [
+        "2024-10-01",
+        "2024-11-01",
+        "2024-12-01",
+        "2025-01-01",
+        "2025-02-01",
+      ],
+      datasets: [
+        {
+          label: "SOG",
+          data: [0, 0, 14, 4, 10],
+          borderColor: "#10B981",
+          backgroundColor: "rgba(16, 185, 129, 0.1)",
+          tension: 0.4,
+        },
+      ],
+    },
+    wingUpDownData: {
+      labels: ["Up", "Down"],
+      datasets: [
+        {
+          data: [90, 10],
+          backgroundColor: [
+            "rgba(99, 102, 241, 0.8)",
+            "rgba(236, 72, 153, 0.8)",
+          ],
+        },
+      ],
+    },
   },
 ];
 
@@ -270,26 +513,45 @@ const ShipsPage = () => {
     },
   };
 
+  const barOptions = {
+    ...chartOptions,
+    scales: {
+      ...chartOptions.scales,
+      y: {
+        ...chartOptions.scales.y,
+        max: 250,
+      },
+    },
+  };
+
   return (
     <div className="p-8">
       <div className="max-w-7xl mx-auto">
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-3xl font-bold">Ships Management</h1>
-          <select
-            className="bg-gray-800 border border-gray-700 rounded-lg px-4 py-2"
-            value={selectedShip.id}
-            onChange={(e) =>
-              setSelectedShip(
-                MOCK_SHIPS.find((s) => s.id === Number(e.target.value))
-              )
-            }
-          >
-            {MOCK_SHIPS.map((ship) => (
-              <option key={ship.id} value={ship.id}>
-                {ship.name}
-              </option>
-            ))}
-          </select>
+          <div className="relative">
+            <select
+              className="bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 pr-10 appearance-none w-full text-white"
+              value={selectedShip.id}
+              onChange={(e) =>
+                setSelectedShip(
+                  MOCK_SHIPS.find((s) => s.id === Number(e.target.value))
+                )
+              }
+            >
+              {MOCK_SHIPS.map((ship) => (
+                <option key={ship.id} value={ship.id}>
+                  {ship.name}
+                </option>
+              ))}
+            </select>
+
+            {/* Lucide Icon */}
+            <ChevronDown
+              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 pointer-events-none"
+              size={16}
+            />
+          </div>
         </div>
 
         {/* Ship Details */}
@@ -376,6 +638,63 @@ const ShipsPage = () => {
               </div>
             </div>
           </motion.div>
+        </div>
+
+        {/* Wing Rotation Analysis */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+          {/* Wing Rotation Angle Distribution */}
+          <div className="lg:col-span-2 bg-gray-800 bg-opacity-50 backdrop-blur-md overflow-hidden shadow-lg rounded-xl border border-gray-700 p-6">
+            <h3 className="text-lg font-semibold mb-4">
+              Wing Rotation Angle Distribution
+            </h3>
+            <div className="h-[300px]">
+              <Bar data={selectedShip.wingRotationData} options={barOptions} />
+            </div>
+          </div>
+
+          {/* Wing Up/Down Distribution */}
+          <div className="bg-gray-800 bg-opacity-50 backdrop-blur-md overflow-hidden shadow-lg rounded-xl border border-gray-700 p-6">
+            <h3 className="text-lg font-semibold mb-4">
+              Wing Position Distribution
+            </h3>
+            <div className="h-[300px]">
+              <Pie
+                data={selectedShip.wingUpDownData}
+                options={doughnutOptions}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Navigation Data */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+          {/* Wind Speed Over Time */}
+          <div className="bg-gray-800 bg-opacity-50 backdrop-blur-md overflow-hidden shadow-lg rounded-xl border border-gray-700 p-6">
+            <h3 className="text-lg font-semibold mb-4">Wind Speed Over Time</h3>
+            <div className="h-[300px]">
+              <Line data={selectedShip.windSpeedData} options={chartOptions} />
+            </div>
+          </div>
+
+          {/* COG Over Time */}
+          <div className="bg-gray-800 bg-opacity-50 backdrop-blur-md overflow-hidden shadow-lg rounded-xl border border-gray-700 p-6">
+            <h3 className="text-lg font-semibold mb-4">
+              Course Over Ground (COG)
+            </h3>
+            <div className="h-[300px]">
+              <Line data={selectedShip.cogData} options={chartOptions} />
+            </div>
+          </div>
+        </div>
+
+        {/* SOG Chart */}
+        <div className="bg-gray-800 bg-opacity-50 backdrop-blur-md overflow-hidden shadow-lg rounded-xl border border-gray-700 p-6 mb-6">
+          <h3 className="text-lg font-semibold mb-4">
+            Speed Over Ground (SOG)
+          </h3>
+          <div className="h-[300px]">
+            <Line data={selectedShip.sogData} options={chartOptions} />
+          </div>
         </div>
 
         {/* Performance Charts */}

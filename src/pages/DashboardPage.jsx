@@ -1,8 +1,15 @@
 import React from "react";
-import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import {
+  MapContainer,
+  TileLayer,
+  Marker,
+  Popup,
+  Polyline,
+} from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import { Ship, Anchor, Navigation, Fuel, Wind } from "lucide-react";
 import { motion } from "framer-motion";
+import { Line, Pie, Bar } from "react-chartjs-2";
 import StatCard from "../components/shared/StatCard";
 
 // Mock data - will be replaced with API data later
@@ -14,6 +21,13 @@ const MOCK_SHIPS = [
     status: "En Route",
     destination: "Rotterdam",
     eta: "2024-03-10",
+    path: [
+      [51.505, -0.09],
+      [51.6, -0.5],
+      [51.8, -1.0],
+      [52.0, -1.5],
+      [52.2, -2.0],
+    ],
   },
   {
     id: 2,
@@ -22,6 +36,13 @@ const MOCK_SHIPS = [
     status: "Docked",
     destination: "Hamburg",
     eta: "2024-03-15",
+    path: [
+      [48.8566, 2.3522],
+      [49.0, 2.5],
+      [49.2, 2.8],
+      [49.5, 3.0],
+      [49.8, 3.2],
+    ],
   },
 ];
 
@@ -31,6 +52,94 @@ const DASHBOARD_STATS = {
   totalCargo: "45,678 tons",
   fuelConsumption: "1,234 tons",
   avgSpeed: "18 knots",
+};
+
+// Chart data
+const shipTypeData = {
+  labels: ["Cargo Ships", "Tankers", "Container Ships", "Bulk Carriers"],
+  datasets: [
+    {
+      data: [35, 25, 20, 20],
+      backgroundColor: [
+        "rgba(99, 102, 241, 0.8)",
+        "rgba(139, 92, 246, 0.8)",
+        "rgba(236, 72, 153, 0.8)",
+        "rgba(16, 185, 129, 0.8)",
+      ],
+      borderColor: "rgba(255, 255, 255, 0.1)",
+    },
+  ],
+};
+
+const monthlyCargoData = {
+  labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun"],
+  datasets: [
+    {
+      label: "Cargo Volume (tons)",
+      data: [45000, 52000, 49000, 47000, 53000, 51000],
+      backgroundColor: "rgba(99, 102, 241, 0.8)",
+      borderColor: "rgba(99, 102, 241, 1)",
+      borderWidth: 2,
+    },
+  ],
+};
+
+const fuelEfficiencyData = {
+  labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun"],
+  datasets: [
+    {
+      label: "Fuel Efficiency (nm/ton)",
+      data: [12.5, 12.8, 12.3, 12.9, 12.6, 12.7],
+      borderColor: "rgba(236, 72, 153, 1)",
+      backgroundColor: "rgba(236, 72, 153, 0.1)",
+      tension: 0.4,
+      fill: true,
+    },
+  ],
+};
+
+const chartOptions = {
+  responsive: true,
+  maintainAspectRatio: false,
+  scales: {
+    y: {
+      beginAtZero: true,
+      grid: {
+        color: "rgba(255, 255, 255, 0.1)",
+      },
+      ticks: {
+        color: "rgba(255, 255, 255, 0.8)",
+      },
+    },
+    x: {
+      grid: {
+        color: "rgba(255, 255, 255, 0.1)",
+      },
+      ticks: {
+        color: "rgba(255, 255, 255, 0.8)",
+      },
+    },
+  },
+  plugins: {
+    legend: {
+      labels: {
+        color: "rgba(255, 255, 255, 0.8)",
+      },
+    },
+  },
+};
+
+const pieOptions = {
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: {
+    legend: {
+      position: "right",
+      labels: {
+        color: "rgba(255, 255, 255, 0.8)",
+      },
+    },
+  },
 };
 
 const DashboardPage = () => {
@@ -73,33 +182,72 @@ const DashboardPage = () => {
         </motion.div>
 
         {/* World Map */}
-        <div className="bg-gray-800 rounded-lg p-4 mb-8">
-          <h2 className="text-xl font-semibold mb-4">Ship Locations</h2>
+        <div className="bg-gray-800 bg-opacity-50 backdrop-blur-md overflow-hidden shadow-lg rounded-xl border border-gray-700 p-4 mb-8">
+          <h2 className="text-xl font-semibold mb-4">
+            Ship Locations & Routes
+          </h2>
           <div className="h-[400px] rounded-lg overflow-hidden">
             <MapContainer
-              center={[50, 0]}
-              zoom={3.5}
+              center={[50.5, 0]}
+              zoom={6.4}
               style={{ height: "100%", width: "100%" }}
             >
               <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
               {MOCK_SHIPS.map((ship) => (
-                <Marker key={ship.id} position={ship.position}>
-                  <Popup>
-                    <div className="text-gray-900">
-                      <h3 className="font-bold">{ship.name}</h3>
-                      <p>Status: {ship.status}</p>
-                      <p>Destination: {ship.destination}</p>
-                      <p>ETA: {ship.eta}</p>
-                    </div>
-                  </Popup>
-                </Marker>
+                <React.Fragment key={ship.id}>
+                  <Marker position={ship.position}>
+                    <Popup>
+                      <div className="text-gray-900">
+                        <h3 className="font-bold">{ship.name}</h3>
+                        <p>Status: {ship.status}</p>
+                        <p>Destination: {ship.destination}</p>
+                        <p>ETA: {ship.eta}</p>
+                      </div>
+                    </Popup>
+                  </Marker>
+                  <Polyline
+                    positions={ship.path}
+                    color="#6366f1"
+                    weight={3}
+                    opacity={0.7}
+                  />
+                </React.Fragment>
               ))}
             </MapContainer>
           </div>
         </div>
 
+        {/* Charts Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+          {/* Ship Types Distribution */}
+          <div className="bg-gray-800 bg-opacity-50 backdrop-blur-md overflow-hidden shadow-lg rounded-xl border border-gray-700 p-6">
+            <h3 className="text-lg font-semibold mb-4">Fleet Distribution</h3>
+            <div className="h-[300px]">
+              <Pie data={shipTypeData} options={pieOptions} />
+            </div>
+          </div>
+
+          {/* Monthly Cargo Volume */}
+          <div className="bg-gray-800 bg-opacity-50 backdrop-blur-md overflow-hidden shadow-lg rounded-xl border border-gray-700 p-6">
+            <h3 className="text-lg font-semibold mb-4">Monthly Cargo Volume</h3>
+            <div className="h-[300px]">
+              <Bar data={monthlyCargoData} options={chartOptions} />
+            </div>
+          </div>
+        </div>
+
+        {/* Fuel Efficiency Trend */}
+        <div className="bg-gray-800 bg-opacity-50 backdrop-blur-md overflow-hidden shadow-lg rounded-xl border border-gray-700 p-6">
+          <h3 className="text-lg font-semibold mb-4">
+            Fleet Fuel Efficiency Trend
+          </h3>
+          <div className="h-[300px]">
+            <Line data={fuelEfficiencyData} options={chartOptions} />
+          </div>
+        </div>
+
         {/* Ships Overview */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
           {MOCK_SHIPS.map((ship) => (
             <motion.div
               key={ship.id}
