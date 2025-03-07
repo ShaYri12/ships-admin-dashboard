@@ -7,10 +7,58 @@ import {
   Polyline,
 } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
-import { Ship, Anchor, Navigation, Fuel, Wind } from "lucide-react";
+import { Ship, Anchor, Navigation, Fuel, MapPin } from "lucide-react";
 import { motion } from "framer-motion";
 import { Line, Pie, Bar } from "react-chartjs-2";
 import StatCard from "../components/shared/StatCard";
+import L from "leaflet";
+import { renderToString } from "react-dom/server";
+
+// Create custom ship icon
+const createShipIcon = (color) => {
+  const shipSvg = renderToString(
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="black"
+      width={34}
+      height={34}
+    >
+      <path d="M9 4H14.4458C14.7905 4 15.111 4.17762 15.2938 4.47L18.75 10H23.1577C23.4339 10 23.6577 10.2239 23.6577 10.5C23.6577 10.5837 23.6367 10.666 23.5967 10.7394L19.6599 17.9568C19.444 17.9853 19.2237 18 19 18C17.3644 18 15.9122 17.2147 15 16.0005C14.0878 17.2147 12.6356 18 11 18C9.3644 18 7.91223 17.2147 7 16.0005C6.08777 17.2147 4.6356 18 3 18C2.81381 18 2.63 17.9898 2.44909 17.97L1.21434 11.1789C1.11555 10.6355 1.47595 10.1149 2.01933 10.0161C2.07835 10.0054 2.13822 10 2.19821 10H3V5C3 4.44772 3.44772 4 4 4H5V1H9V4ZM5 10H16.3915L13.8915 6H5V10ZM3 20C4.53671 20 5.93849 19.4223 7 18.4722C8.06151 19.4223 9.46329 20 11 20C12.5367 20 13.9385 19.4223 15 18.4722C16.0615 19.4223 17.4633 20 19 20H21V22H19C17.5429 22 16.1767 21.6104 15 20.9297C13.8233 21.6104 12.4571 22 11 22C9.54285 22 8.17669 21.6104 7 20.9297C5.82331 21.6104 4.45715 22 3 22H1V20H3Z"></path>
+    </svg>
+  );
+  return L.divIcon({
+    html: shipSvg,
+    className: "custom-ship-icon",
+    iconSize: [24, 24],
+    iconAnchor: [12, 12],
+  });
+};
+
+// Create custom pin icon
+const createPinIcon = (color) => {
+  const pinSvg = renderToString(
+    <MapPin style={{ color: "black", fill: "white" }} />
+  );
+  return L.divIcon({
+    html: pinSvg,
+    className: "custom-pin-icon",
+    iconSize: [24, 24],
+    iconAnchor: [12, 24],
+  });
+};
+
+// Add custom icon styles
+const iconStyle = `
+  .custom-ship-icon, .custom-pin-icon {
+    background: none;
+    border: none;
+  }
+  .custom-ship-icon svg, .custom-pin-icon svg {
+    width: 24px;
+    height: 24px;
+  }
+`;
 
 // Mock data - will be replaced with API data later
 const MOCK_SHIPS = [
@@ -28,6 +76,7 @@ const MOCK_SHIPS = [
       [52.0, -1.5],
       [52.2, -2.0],
     ],
+    color: "#6366f1",
   },
   {
     id: 2,
@@ -43,6 +92,7 @@ const MOCK_SHIPS = [
       [49.5, 3.0],
       [49.8, 3.2],
     ],
+    color: "#8B5CF6",
   },
 ];
 
@@ -187,6 +237,7 @@ const DashboardPage = () => {
             Ship Locations & Routes
           </h2>
           <div className="h-[400px] rounded-lg overflow-hidden">
+            <style>{iconStyle}</style>
             <MapContainer
               center={[50.5, 0]}
               zoom={6.4}
@@ -195,7 +246,12 @@ const DashboardPage = () => {
               <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
               {MOCK_SHIPS.map((ship) => (
                 <React.Fragment key={ship.id}>
-                  <Marker position={ship.position}>
+                  {/* Current Position with Ship Icon */}
+                  <Marker
+                    position={ship.position}
+                    icon={createShipIcon(ship.color)}
+                    zIndexOffset={1000}
+                  >
                     <Popup>
                       <div className="text-gray-900">
                         <h3 className="font-bold">{ship.name}</h3>
@@ -205,9 +261,39 @@ const DashboardPage = () => {
                       </div>
                     </Popup>
                   </Marker>
+
+                  {/* Start Point Pin */}
+                  <Marker
+                    position={ship.path[0]}
+                    icon={createPinIcon(ship.color)}
+                    zIndexOffset={100}
+                  >
+                    <Popup>
+                      <div className="text-gray-900">
+                        <h3 className="font-bold">Start Point</h3>
+                        <p>{ship.name}</p>
+                      </div>
+                    </Popup>
+                  </Marker>
+
+                  {/* End Point Pin */}
+                  <Marker
+                    position={ship.path[ship.path.length - 1]}
+                    icon={createPinIcon(ship.color)}
+                    zIndexOffset={100}
+                  >
+                    <Popup>
+                      <div className="text-gray-900">
+                        <h3 className="font-bold">Destination</h3>
+                        <p>{ship.destination}</p>
+                      </div>
+                    </Popup>
+                  </Marker>
+
+                  {/* Path Line */}
                   <Polyline
                     positions={ship.path}
-                    color="#6366f1"
+                    color={ship.color}
                     weight={3}
                     opacity={0.7}
                   />
@@ -259,7 +345,10 @@ const DashboardPage = () => {
             >
               <div className="px-4 py-5 sm:p-6">
                 <div className="flex items-center mb-4">
-                  <Ship className="w-6 h-6 mr-3" style={{ color: "#6366f1" }} />
+                  <Ship
+                    className="w-6 h-6 mr-3"
+                    style={{ color: ship.color }}
+                  />
                   <h3 className="text-lg font-semibold">{ship.name}</h3>
                 </div>
                 <div className="space-y-2">
