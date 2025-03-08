@@ -60,48 +60,125 @@ const iconStyle = `
   }
 `;
 
-// Mock data - will be replaced with API data later
+// Mock data from JSON files
 const MOCK_SHIPS = [
   {
     id: 1,
-    name: "Cargo Ship Alpha",
-    position: [51.505, -0.09],
+    name: "Vlad Container",
+    imo: "5550011",
+    position: [52.3708, 4.8958],
     status: "En Route",
     destination: "Rotterdam",
     eta: "2024-03-10",
     path: [
-      [51.505, -0.09],
-      [51.6, -0.5],
-      [51.8, -1.0],
-      [52.0, -1.5],
-      [52.2, -2.0],
+      [52.3702, 4.8952], // Amsterdam Port
+      [52.422, 4.58], // North Sea Canal
+      [52.4632, 4.5552], // IJmuiden (Sea Entry)
+      [52.5, 4.2], // North Sea Route
+      [52.45, 3.9], // Offshore Route Start
+      [52.2, 3.7], // North Sea Shipping Lane
+      [51.99, 3.8], // Rotterdam Approach
+      [51.9581, 4.0494], // Europoort Entry
+      [51.9225, 4.4792], // Rotterdam Port
     ],
     color: "#6366f1",
+    windSpeed: 15.7,
+    fanSpeed: 3.9,
+    statistics: {
+      wind_speed: {
+        avg: 15.7,
+        max: 19.3,
+        min: 12.2,
+      },
+      fan_speed: {
+        avg: 3.9,
+        max: 4.4,
+        min: 3.1,
+      },
+    },
   },
   {
     id: 2,
-    name: "Tanker Beta",
-    position: [48.8566, 2.3522],
-    status: "Docked",
-    destination: "Hamburg",
+    name: "Paulo Tanker",
+    imo: "5550022",
+    position: [34.0528, -118.2442],
+    status: "En Route",
+    destination: "San Francisco",
     eta: "2024-03-15",
     path: [
-      [48.8566, 2.3522],
-      [49.0, 2.5],
-      [49.2, 2.8],
-      [49.5, 3.0],
-      [49.8, 3.2],
+      [33.752, -118.2437], // Port of LA
+      [33.7157, -118.652], // LA Harbor Exit
+      [33.8, -119.5], // Santa Barbara Channel
+      [34.2, -120.7], // Offshore Route
+      [35.5, -121.8], // Central California Coast
+      [36.8, -122.5], // Monterey Bay Approach
+      [37.5, -122.8], // SF Approach
+      [37.7749, -122.4194], // San Francisco Port
     ],
     color: "#8B5CF6",
+    windSpeed: 13.4,
+    fanSpeed: 3.3,
+    statistics: {
+      wind_speed: {
+        avg: 13.4,
+        max: 16.0,
+        min: 11.0,
+      },
+      fan_speed: {
+        avg: 3.3,
+        max: 4.0,
+        min: 2.7,
+      },
+    },
+  },
+  {
+    id: 3,
+    name: "Evy Yacht",
+    imo: "5550033",
+    position: [48.857, 2.3528],
+    status: "En Route",
+    destination: "Mediterranean",
+    eta: "2024-03-20",
+    path: [
+      [48.8566, 2.3522], // Paris (Seine River)
+      [49.4897, 0.1089], // Le Havre (Seine Estuary)
+      [49.85, -1.6], // English Channel Entry
+      [49.6, -3], // English Channel Entry
+      [48.8, -5.0], // Brest Approach
+      [47.5, -5.0], // Bay of Biscay North
+      [45.8, -3.5], // Bay of Biscay Central
+      [44.5, -3.0], // Bay of Biscay South
+      [43.8, -2.0], // Spanish Coast North
+      [43.36, -2.0], // Spanish Coast
+      [43.2, -1.8], // Bay of Biscay Exit
+    ],
+    color: "#EC4899",
+    windSpeed: 12.1,
+    fanSpeed: 2.9,
+    statistics: {
+      wind_speed: {
+        avg: 12.1,
+        max: 14.0,
+        min: 10.0,
+      },
+      fan_speed: {
+        avg: 2.9,
+        max: 3.5,
+        min: 2.5,
+      },
+    },
   },
 ];
 
-// Mock stats data
+// Update dashboard stats based on mock data averages
 const DASHBOARD_STATS = {
-  activeShips: "12",
+  activeShips: MOCK_SHIPS.length.toString(),
   totalCargo: "45,678 tons",
   fuelConsumption: "1,234 tons",
-  avgSpeed: "18 knots",
+  avgSpeed: `${(
+    MOCK_SHIPS.reduce((acc, ship) => acc + ship.windSpeed, 0) /
+    MOCK_SHIPS.length
+  ).toFixed(1)} knots`,
 };
 
 // Chart data
@@ -239,11 +316,15 @@ const DashboardPage = () => {
           <div className="h-[400px] rounded-lg overflow-hidden">
             <style>{iconStyle}</style>
             <MapContainer
-              center={[50.5, 0]}
-              zoom={6.4}
+              center={[40, -50]}
+              zoom={3}
               style={{ height: "100%", width: "100%" }}
+              minZoom={2}
             >
-              <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+              <TileLayer
+                url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+              />
               {MOCK_SHIPS.map((ship) => (
                 <React.Fragment key={ship.id}>
                   {/* Current Position with Ship Icon */}
@@ -255,7 +336,20 @@ const DashboardPage = () => {
                     <Popup>
                       <div className="text-gray-900">
                         <h3 className="font-bold">{ship.name}</h3>
+                        <p>IMO: {ship.imo}</p>
                         <p>Status: {ship.status}</p>
+                        <p>
+                          Wind Speed: {ship.statistics.wind_speed.avg} knots
+                        </p>
+                        <p className="text-xs text-gray-600">
+                          (min: {ship.statistics.wind_speed.min}, max:{" "}
+                          {ship.statistics.wind_speed.max})
+                        </p>
+                        <p>Fan Speed: {ship.statistics.fan_speed.avg}</p>
+                        <p className="text-xs text-gray-600">
+                          (min: {ship.statistics.fan_speed.min}, max:{" "}
+                          {ship.statistics.fan_speed.max})
+                        </p>
                         <p>Destination: {ship.destination}</p>
                         <p>ETA: {ship.eta}</p>
                       </div>
@@ -270,8 +364,9 @@ const DashboardPage = () => {
                   >
                     <Popup>
                       <div className="text-gray-900">
-                        <h3 className="font-bold">Start Point</h3>
+                        <h3 className="font-bold">Departure Port</h3>
                         <p>{ship.name}</p>
+                        <p className="text-sm text-gray-600">IMO: {ship.imo}</p>
                       </div>
                     </Popup>
                   </Marker>
@@ -286,6 +381,7 @@ const DashboardPage = () => {
                       <div className="text-gray-900">
                         <h3 className="font-bold">Destination</h3>
                         <p>{ship.destination}</p>
+                        <p className="text-sm text-gray-600">ETA: {ship.eta}</p>
                       </div>
                     </Popup>
                   </Marker>
@@ -296,6 +392,8 @@ const DashboardPage = () => {
                     color={ship.color}
                     weight={3}
                     opacity={0.7}
+                    dashArray="2, 8, 12, 8"
+                    dashOffset="0"
                   />
                 </React.Fragment>
               ))}
