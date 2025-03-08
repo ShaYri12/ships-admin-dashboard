@@ -106,7 +106,7 @@ const MOCK_SHIPS = [
     destination: "San Francisco",
     eta: "2024-03-15",
     path: [
-      [33.752, -118.2437], // Port of LA
+      [34.0528, -118.2442], // Port of LA
       [33.7157, -118.652], // LA Harbor Exit
       [33.8, -119.5], // Santa Barbara Channel
       [34.2, -120.7], // Offshore Route

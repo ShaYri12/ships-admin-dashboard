@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Users, Plus, Edit2, Trash2 } from "lucide-react";
+import { Users, Plus, Edit2, Trash2, ChevronDown } from "lucide-react";
 import axios from "axios";
 
 // Role types for ship positions
@@ -173,55 +173,76 @@ const UsersPage = () => {
                   <label className="block text-sm font-medium mb-1">
                     Ship Role
                   </label>
-                  <select
-                    value={formData.shipRole}
-                    onChange={(e) =>
-                      setFormData({ ...formData, shipRole: e.target.value })
-                    }
-                    className="w-full bg-gray-700 rounded-lg px-4 py-2"
-                    required
-                  >
-                    <option value="">Select Role</option>
-                    {SHIP_ROLES.map((role) => (
-                      <option key={role} value={role}>
-                        {role}
-                      </option>
-                    ))}
-                  </select>
+                  <div className="relative">
+                    <select
+                      value={formData.shipRole}
+                      onChange={(e) =>
+                        setFormData({ ...formData, shipRole: e.target.value })
+                      }
+                      className="bg-gray-700 rounded-lg px-4 py-2 border border-gray-700 px-4 py-2 pr-10 appearance-none w-full text-white"
+                      required
+                    >
+                      <option value="">Select Role</option>
+                      {SHIP_ROLES.map((role) => (
+                        <option key={role} value={role}>
+                          {role}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white pointer-events-none"
+                      size={16}
+                    />
+                  </div>
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-1">
                     Assigned Ship
                   </label>
-                  <select
-                    value={formData.assignedShip}
-                    onChange={(e) =>
-                      setFormData({ ...formData, assignedShip: e.target.value })
-                    }
-                    className="w-full bg-gray-700 rounded-lg px-4 py-2"
-                    required
-                  >
-                    <option value="">Select Ship</option>
-                    <option value="Vlad Container">Vlad Container</option>
-                    <option value="Paulo Tanker">Paulo Tanker</option>
-                    <option value="Evy Yacht">Evy Yacht</option>
-                  </select>
+                  <div className="relative">
+                    <select
+                      value={formData.assignedShip}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          assignedShip: e.target.value,
+                        })
+                      }
+                      className="bg-gray-700 rounded-lg px-4 py-2 border border-gray-700 px-4 py-2 pr-10 appearance-none w-full text-white"
+                      required
+                    >
+                      <option value="">Select Ship</option>
+                      <option value="Vlad Container">Vlad Container</option>
+                      <option value="Paulo Tanker">Paulo Tanker</option>
+                      <option value="Evy Yacht">Evy Yacht</option>
+                    </select>
+                    <ChevronDown
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white pointer-events-none"
+                      size={16}
+                    />
+                  </div>
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-1">
                     Status
                   </label>
-                  <select
-                    value={formData.status}
-                    onChange={(e) =>
-                      setFormData({ ...formData, status: e.target.value })
-                    }
-                    className="w-full bg-gray-700 rounded-lg px-4 py-2"
-                    required
-                  >
-                    <option value="active">Active</option>
-                    <option value="inactive">Inactive</option>
-                  </select>
+                  <div className="relative">
+                    <select
+                      value={formData.status}
+                      onChange={(e) =>
+                        setFormData({ ...formData, status: e.target.value })
+                      }
+                      className="bg-gray-700 rounded-lg px-4 py-2 border border-gray-700 px-4 py-2 pr-10 appearance-none w-full text-white"
+                      required
+                    >
+                      <option value="active">Active</option>
+                      <option value="inactive">Inactive</option>
+                    </select>
+                    <ChevronDown
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white pointer-events-none"
+                      size={16}
+                    />
+                  </div>
                 </div>
               </div>
               <div className="flex justify-end space-x-4">
