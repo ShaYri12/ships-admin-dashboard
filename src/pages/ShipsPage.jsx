@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { Line, Bar, Doughnut, Pie } from "react-chartjs-2";
 import {
   Chart as ChartJS,
@@ -12,8 +12,19 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
-import { Ship, Anchor, Navigation, ChevronDown } from "lucide-react";
+import { Ship, Anchor, Navigation, ChevronDown, MapPin } from "lucide-react";
 import { motion } from "framer-motion";
+import {
+  MapContainer,
+  TileLayer,
+  Marker,
+  Popup,
+  Polyline,
+  useMap,
+} from "react-leaflet";
+import "leaflet/dist/leaflet.css";
+import L from "leaflet";
+import { renderToString } from "react-dom/server";
 
 // Register ChartJS components
 ChartJS.register(
@@ -42,6 +53,18 @@ const MOCK_SHIPS = [
       latitude: 52.3708,
       longitude: 4.8958,
     },
+    path: [
+      [52.3702, 4.8952], // Amsterdam Port
+      [52.422, 4.58], // North Sea Canal
+      [52.4632, 4.5552], // IJmuiden (Sea Entry)
+      [52.5, 4.2], // North Sea Route
+      [52.45, 3.9], // Offshore Route Start
+      [52.2, 3.7], // North Sea Shipping Lane
+      [51.99, 3.8], // Rotterdam Approach
+      [51.9581, 4.0494], // Europoort Entry
+      [51.9225, 4.4792], // Rotterdam Port
+    ],
+    color: "#6366f1",
     performanceData: {
       labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun"],
       datasets: [
@@ -149,14 +172,25 @@ const MOCK_SHIPS = [
       latitude: 34.0528,
       longitude: -118.2442,
     },
+    path: [
+      [34.0528, -118.2442], // Port of LA
+      [33.7157, -118.652], // LA Harbor Exit
+      [33.8, -119.5], // Santa Barbara Channel
+      [34.2, -120.7], // Offshore Route
+      [35.5, -121.8], // Central California Coast
+      [36.8, -122.5], // Monterey Bay Approach
+      [37.5, -122.8], // SF Approach
+      [37.7749, -122.4194], // San Francisco Port
+    ],
+    color: "#8B5CF6",
     performanceData: {
       labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun"],
       datasets: [
         {
           label: "Wind Speed (knots)",
           data: [13.4, 13.8, 13.2, 13.6, 13.9, 13.5],
-          borderColor: "#6366f1",
-          backgroundColor: "rgba(99, 102, 241, 0.1)",
+          borderColor: "#8B5CF6",
+          backgroundColor: "rgba(139, 92, 246, 0.1)",
           tension: 0.4,
         },
         {
@@ -207,8 +241,8 @@ const MOCK_SHIPS = [
           data: Array.from({ length: 24 }, () =>
             Math.floor(Math.random() * 180)
           ),
-          borderColor: "#6366f1",
-          backgroundColor: "rgb(99, 102, 241)",
+          borderColor: "#8B5CF6",
+          backgroundColor: "rgb(139, 92, 246)",
           barThickness: 8,
         },
       ],
@@ -256,21 +290,35 @@ const MOCK_SHIPS = [
       latitude: 48.857,
       longitude: 2.3528,
     },
+    path: [
+      [48.8566, 2.3522], // Paris (Seine River)
+      [49.4897, 0.1089], // Le Havre (Seine Estuary)
+      [49.85, -1.6], // English Channel Entry
+      [49.6, -3], // English Channel Entry
+      [48.8, -5.0], // Brest Approach
+      [47.5, -5.0], // Bay of Biscay North
+      [45.8, -3.5], // Bay of Biscay Central
+      [44.5, -3.0], // Bay of Biscay South
+      [43.8, -2.0], // Spanish Coast North
+      [43.36, -2.0], // Spanish Coast
+      [43.2, -1.8], // Bay of Biscay Exit
+    ],
+    color: "#EC4899",
     performanceData: {
       labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun"],
       datasets: [
         {
           label: "Wind Speed (knots)",
           data: [12.1, 12.5, 12.0, 12.3, 12.6, 12.2],
-          borderColor: "#6366f1",
-          backgroundColor: "rgba(99, 102, 241, 0.1)",
+          borderColor: "#EC4899",
+          backgroundColor: "rgba(236, 72, 153, 0.1)",
           tension: 0.4,
         },
         {
           label: "Fan Speed",
           data: [2.9, 3.1, 2.8, 3.0, 3.2, 2.9],
-          borderColor: "#8B5CF6",
-          backgroundColor: "rgba(139, 92, 246, 0.1)",
+          borderColor: "#EC4899",
+          backgroundColor: "rgba(236, 72, 153, 0.1)",
           tension: 0.4,
         },
       ],
@@ -314,8 +362,8 @@ const MOCK_SHIPS = [
           data: Array.from({ length: 24 }, () =>
             Math.floor(Math.random() * 160)
           ),
-          borderColor: "#6366f1",
-          backgroundColor: "rgb(99, 102, 241)",
+          borderColor: "#EC4899",
+          backgroundColor: "rgb(236, 72, 153)",
           barThickness: 8,
         },
       ],
@@ -332,8 +380,8 @@ const MOCK_SHIPS = [
         {
           label: "Wind Speed",
           data: [12.1, 12.5, 12.0, 12.3, 12.6],
-          borderColor: "#8B5CF6",
-          backgroundColor: "rgba(139, 92, 246, 0.1)",
+          borderColor: "#EC4899",
+          backgroundColor: "rgba(236, 72, 153, 0.1)",
           tension: 0.4,
         },
       ],
@@ -353,8 +401,73 @@ const MOCK_SHIPS = [
   },
 ];
 
+// Create custom ship icon
+const createShipIcon = (color) => {
+  const shipSvg = renderToString(
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="black"
+      width={34}
+      height={34}
+    >
+      <path d="M9 4H14.4458C14.7905 4 15.111 4.17762 15.2938 4.47L18.75 10H23.1577C23.4339 10 23.6577 10.2239 23.6577 10.5C23.6577 10.5837 23.6367 10.666 23.5967 10.7394L19.6599 17.9568C19.444 17.9853 19.2237 18 19 18C17.3644 18 15.9122 17.2147 15 16.0005C14.0878 17.2147 12.6356 18 11 18C9.3644 18 7.91223 17.2147 7 16.0005C6.08777 17.2147 4.6356 18 3 18C2.81381 18 2.63 17.9898 2.44909 17.97L1.21434 11.1789C1.11555 10.6355 1.47595 10.1149 2.01933 10.0161C2.07835 10.0054 2.13822 10 2.19821 10H3V5C3 4.44772 3.44772 4 4 4H5V1H9V4ZM5 10H16.3915L13.8915 6H5V10ZM3 20C4.53671 20 5.93849 19.4223 7 18.4722C8.06151 19.4223 9.46329 20 11 20C12.5367 20 13.9385 19.4223 15 18.4722C16.0615 19.4223 17.4633 20 19 20H21V22H19C17.5429 22 16.1767 21.6104 15 20.9297C13.8233 21.6104 12.4571 22 11 22C9.54285 22 8.17669 21.6104 7 20.9297C5.82331 21.6104 4.45715 22 3 22H1V20H3Z"></path>
+    </svg>
+  );
+  return L.divIcon({
+    html: shipSvg,
+    className: "custom-ship-icon",
+    iconSize: [24, 24],
+    iconAnchor: [12, 12],
+  });
+};
+
+// Create custom pin icon
+const createPinIcon = (color) => {
+  const pinSvg = renderToString(
+    <MapPin style={{ color: "black", fill: "white" }} />
+  );
+  return L.divIcon({
+    html: pinSvg,
+    className: "custom-pin-icon",
+    iconSize: [24, 24],
+    iconAnchor: [12, 24],
+  });
+};
+
+// Add custom icon styles
+const iconStyle = `
+  .custom-ship-icon, .custom-pin-icon {
+    background: none;
+    border: none;
+  }
+  .custom-ship-icon svg, .custom-pin-icon svg {
+    width: 24px;
+    height: 24px;
+  }
+`;
+
+// Map Controller Component to handle map updates
+const MapController = ({ center }) => {
+  const map = useMap();
+
+  React.useEffect(() => {
+    if (map) map.setView(center, 5);
+  }, [center, map]);
+
+  return null;
+};
+
 const ShipsPage = () => {
   const [selectedShip, setSelectedShip] = useState(MOCK_SHIPS[0]);
+
+  // Function to handle ship selection
+  const handleShipChange = (e) => {
+    const newSelectedShip = MOCK_SHIPS.find(
+      (s) => s.id === Number(e.target.value)
+    );
+    setSelectedShip(newSelectedShip);
+  };
 
   const chartOptions = {
     responsive: true,
@@ -420,11 +533,7 @@ const ShipsPage = () => {
             <select
               className="bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 pr-10 appearance-none w-full text-white"
               value={selectedShip.id}
-              onChange={(e) =>
-                setSelectedShip(
-                  MOCK_SHIPS.find((s) => s.id === Number(e.target.value))
-                )
-              }
+              onChange={handleShipChange}
             >
               {MOCK_SHIPS.map((ship) => (
                 <option key={ship.id} value={ship.id}>
@@ -451,7 +560,10 @@ const ShipsPage = () => {
             }}
           >
             <div className="flex items-center mb-4">
-              <Ship className="w-6 h-6 mr-3" style={{ color: "#6366f1" }} />
+              <Ship
+                className="w-6 h-6 mr-3"
+                style={{ color: selectedShip.color }}
+              />
               <h3 className="text-lg font-semibold">Ship Details</h3>
             </div>
             <div className="space-y-2">
@@ -478,7 +590,7 @@ const ShipsPage = () => {
             <div className="flex items-center mb-4">
               <Navigation
                 className="w-6 h-6 mr-3"
-                style={{ color: "#8B5CF6" }}
+                style={{ color: selectedShip.color }}
               />
               <h3 className="text-lg font-semibold">Navigation</h3>
             </div>
@@ -508,7 +620,10 @@ const ShipsPage = () => {
             }}
           >
             <div className="flex items-center mb-4">
-              <Anchor className="w-6 h-6 mr-3" style={{ color: "#EC4899" }} />
+              <Anchor
+                className="w-6 h-6 mr-3"
+                style={{ color: selectedShip.color }}
+              />
               <h3 className="text-lg font-semibold">Statistics</h3>
             </div>
             <div className="space-y-2">
@@ -534,6 +649,109 @@ const ShipsPage = () => {
               </p>
             </div>
           </motion.div>
+        </div>
+
+        {/* Ship Map */}
+        <div className="bg-gray-800 bg-opacity-50 backdrop-blur-md overflow-hidden shadow-lg rounded-xl border border-gray-700 p-4 mb-8">
+          <h2 className="text-xl font-semibold mb-4">Ship Location & Route</h2>
+          <div className="h-[400px] rounded-lg overflow-hidden">
+            <style>{iconStyle}</style>
+            <MapContainer
+              center={[
+                selectedShip.position.latitude,
+                selectedShip.position.longitude,
+              ]}
+              zoom={5}
+              style={{ height: "100%", width: "100%" }}
+              minZoom={2}
+            >
+              <MapController
+                center={[
+                  selectedShip.position.latitude,
+                  selectedShip.position.longitude,
+                ]}
+              />
+              <TileLayer
+                url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+              />
+              {/* Current Position with Ship Icon */}
+              <Marker
+                position={[
+                  selectedShip.position.latitude,
+                  selectedShip.position.longitude,
+                ]}
+                icon={createShipIcon(selectedShip.color)}
+                zIndexOffset={1000}
+              >
+                <Popup>
+                  <div className="text-gray-900">
+                    <h3 className="font-bold">{selectedShip.name}</h3>
+                    <p>IMO: {selectedShip.imo}</p>
+                    <p>Status: {selectedShip.status}</p>
+                    <p>
+                      Wind Speed: {selectedShip.statistics.wind_speed.avg} knots
+                    </p>
+                    <p className="text-xs text-gray-600">
+                      (min: {selectedShip.statistics.wind_speed.min}, max:{" "}
+                      {selectedShip.statistics.wind_speed.max})
+                    </p>
+                    <p>Fan Speed: {selectedShip.statistics.fan_speed.avg}</p>
+                    <p className="text-xs text-gray-600">
+                      (min: {selectedShip.statistics.fan_speed.min}, max:{" "}
+                      {selectedShip.statistics.fan_speed.max})
+                    </p>
+                    <p>Destination: {selectedShip.destination}</p>
+                    <p>ETA: {selectedShip.eta}</p>
+                  </div>
+                </Popup>
+              </Marker>
+
+              {/* Start Point Pin */}
+              <Marker
+                position={selectedShip.path[0]}
+                icon={createPinIcon(selectedShip.color)}
+                zIndexOffset={100}
+              >
+                <Popup>
+                  <div className="text-gray-900">
+                    <h3 className="font-bold">Departure Port</h3>
+                    <p>{selectedShip.name}</p>
+                    <p className="text-sm text-gray-600">
+                      IMO: {selectedShip.imo}
+                    </p>
+                  </div>
+                </Popup>
+              </Marker>
+
+              {/* End Point Pin */}
+              <Marker
+                position={selectedShip.path[selectedShip.path.length - 1]}
+                icon={createPinIcon(selectedShip.color)}
+                zIndexOffset={100}
+              >
+                <Popup>
+                  <div className="text-gray-900">
+                    <h3 className="font-bold">Destination</h3>
+                    <p>{selectedShip.destination}</p>
+                    <p className="text-sm text-gray-600">
+                      ETA: {selectedShip.eta}
+                    </p>
+                  </div>
+                </Popup>
+              </Marker>
+
+              {/* Path Line */}
+              <Polyline
+                positions={selectedShip.path}
+                color={selectedShip.color}
+                weight={3}
+                opacity={0.7}
+                dashArray="2, 8, 12, 8"
+                dashOffset="0"
+              />
+            </MapContainer>
+          </div>
         </div>
 
         {/* Wing Rotation Analysis */}
