@@ -12,6 +12,9 @@ const SHIP_ROLES = [
   "Navigation Officer",
 ];
 
+// System roles
+const SYSTEM_ROLES = ["admin", "user", "seller"];
+
 const UsersPage = () => {
   const [users, setUsers] = useState([]);
   const [isAddingUser, setIsAddingUser] = useState(false);
@@ -20,7 +23,7 @@ const UsersPage = () => {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
-    role: "user", // This will always be "user" for new users
+    role: "user", // Default to user
     shipRole: "",
     assignedShip: "",
     status: "active",
@@ -91,13 +94,29 @@ const UsersPage = () => {
   };
 
   const handleDelete = async (userId) => {
+    // Prevent admin from deleting themselves
+    if (userId === currentUser._id) {
+      setError("You cannot delete your own admin account");
+      return;
+    }
+
     try {
+      // Show confirmation dialog
+      if (
+        !window.confirm(
+          "Are you sure you want to delete this user? This action cannot be undone."
+        )
+      ) {
+        return;
+      }
+
       await axios.delete(`http://localhost:3000/api/users/${userId}`, {
         withCredentials: true,
       });
       fetchUsers();
+      setError(""); // Clear any existing errors
     } catch (error) {
-      setError("Failed to delete user");
+      setError(error.response?.data?.message || "Failed to delete user");
     }
   };
 
@@ -168,6 +187,31 @@ const UsersPage = () => {
                     className="w-full bg-gray-700 rounded-lg px-4 py-2"
                     required
                   />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">
+                    System Role
+                  </label>
+                  <div className="relative">
+                    <select
+                      value={formData.role}
+                      onChange={(e) =>
+                        setFormData({ ...formData, role: e.target.value })
+                      }
+                      className="bg-gray-700 rounded-lg px-4 py-2 border border-gray-700 px-4 py-2 pr-10 appearance-none w-full text-white"
+                      required
+                    >
+                      {SYSTEM_ROLES.map((role) => (
+                        <option key={role} value={role}>
+                          {role}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white pointer-events-none"
+                      size={16}
+                    />
+                  </div>
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-1">
@@ -313,6 +357,8 @@ const UsersPage = () => {
                       className={`px-2 py-1 rounded-full text-xs ${
                         user.role === "admin"
                           ? "bg-purple-500/20 text-purple-500"
+                          : user.role === "seller"
+                          ? "bg-green-500/20 text-green-500"
                           : "bg-blue-500/20 text-blue-500"
                       }`}
                     >

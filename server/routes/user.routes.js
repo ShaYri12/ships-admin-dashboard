@@ -62,13 +62,20 @@ router.get("/", protect, admin, async (req, res) => {
 // Create new user (admin only)
 router.post("/", protect, admin, async (req, res) => {
   try {
-    const { name, email, shipRole, status, assignedShip } = req.body;
+    const { name, email, role, shipRole, status, assignedShip } = req.body;
 
     // Validate required fields
-    if (!name || !email || !shipRole || !status || !assignedShip) {
+    if (!name || !email || !role || !status || !assignedShip) {
       return res.status(400).json({
         message:
-          "Please provide all required fields: name, email, shipRole, status, assignedShip",
+          "Please provide all required fields: name, email, role, status, assignedShip",
+      });
+    }
+
+    // Validate if shipRole is required based on role
+    if ((role === "user" || role === "seller") && !shipRole) {
+      return res.status(400).json({
+        message: "Ship role is required for user and seller roles",
       });
     }
 
@@ -80,7 +87,7 @@ router.post("/", protect, admin, async (req, res) => {
     const user = await User.create({
       name,
       email,
-      role: "user", // Force role to be user for new users
+      role,
       shipRole,
       status,
       assignedShip,
@@ -97,7 +104,11 @@ router.post("/", protect, admin, async (req, res) => {
       assignedShip: user.assignedShip,
     });
   } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
+    console.error("Error creating user:", error);
+    res.status(500).json({
+      message: "Server error",
+      error: error.message,
+    });
   }
 });
 
@@ -142,11 +153,22 @@ router.delete("/:id", protect, admin, async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    // Instead of deleting, set status to inactive
-    user.status = "inactive";
-    await user.save();
+    // Prevent admin from deleting themselves
+    if (user._id.toString() === req.user._id.toString()) {
+      return res
+        .status(403)
+        .json({ message: "You cannot delete your own admin account" });
+    }
 
-    res.json({ message: "User deactivated" });
+    // Check if trying to delete another admin
+    if (user.role === "admin") {
+      return res.status(403).json({ message: "Cannot delete admin accounts" });
+    }
+
+    // Actually delete the user
+    await User.findByIdAndDelete(req.params.id);
+
+    res.json({ message: "User deleted successfully" });
   } catch (error) {
     res.status(500).json({ message: "Server error" });
   }

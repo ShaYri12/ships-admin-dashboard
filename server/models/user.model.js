@@ -23,19 +23,19 @@ const userSchema = new mongoose.Schema(
     },
     role: {
       type: String,
-      enum: ["admin", "user"],
+      enum: ["admin", "user", "seller"],
       default: "user",
     },
     shipRole: {
       type: String,
       required: function () {
-        return this.role === "user";
+        return this.role === "user" || this.role === "seller";
       },
     },
     assignedShip: {
       type: String,
       required: function () {
-        return this.role === "user";
+        return this.role === "user" || this.role === "seller";
       },
     },
     status: {
