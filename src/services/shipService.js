@@ -1,86 +1,115 @@
 import { api, handleApiError } from "./api";
 import { MOCK_SHIPS, MOCK_DASHBOARD_STATS, MOCK_CHART_DATA } from "./mockData";
 
-// Flag to control whether to use mock data
-const USE_MOCK_DATA = true; // Set this to false when ready to use real API
-
 // Ship-related API calls
 export const shipService = {
   // Get all ships
-  getAllShips: async () => {
-    if (USE_MOCK_DATA) {
+  getAllShips: async (isMockMode = true) => {
+    if (isMockMode) {
       return MOCK_SHIPS;
     }
 
     try {
       const response = await api.get("/ships");
+      if (!response.data || !Array.isArray(response.data)) {
+        throw new Error("Invalid data format received from API");
+      }
       return response.data;
     } catch (error) {
-      console.warn("Failed to fetch ships from API, falling back to mock data");
-      return MOCK_SHIPS;
+      console.error("Failed to fetch ships from API:", error);
+      throw new Error(
+        error.response?.data?.message ||
+          "Unable to fetch ships data. Please check your connection or try again later."
+      );
     }
   },
 
   // Get dashboard statistics
-  getDashboardStats: async () => {
-    if (USE_MOCK_DATA) {
+  getDashboardStats: async (isMockMode = true) => {
+    if (isMockMode) {
       return MOCK_DASHBOARD_STATS;
     }
 
     try {
       const response = await api.get("/dashboard/stats");
+      if (!response.data) {
+        throw new Error("Invalid dashboard stats received from API");
+      }
       return response.data;
     } catch (error) {
-      console.warn(
-        "Failed to fetch dashboard stats from API, falling back to mock data"
+      console.error("Failed to fetch dashboard stats from API:", error);
+      throw new Error(
+        error.response?.data?.message ||
+          "Unable to fetch dashboard statistics. Please check your connection or try again later."
       );
-      return MOCK_DASHBOARD_STATS;
     }
   },
 
   // Get chart data
-  getChartData: async () => {
-    if (USE_MOCK_DATA) {
+  getChartData: async (isMockMode = true) => {
+    if (isMockMode) {
       return MOCK_CHART_DATA;
     }
 
     try {
       const response = await api.get("/dashboard/charts");
+      if (!response.data) {
+        throw new Error("Invalid chart data received from API");
+      }
       return response.data;
     } catch (error) {
-      console.warn(
-        "Failed to fetch chart data from API, falling back to mock data"
+      console.error("Failed to fetch chart data from API:", error);
+      throw new Error(
+        error.response?.data?.message ||
+          "Unable to fetch chart data. Please check your connection or try again later."
       );
-      return MOCK_CHART_DATA;
     }
   },
 
   // Get single ship by ID
-  getShipById: async (id) => {
-    if (USE_MOCK_DATA) {
-      return MOCK_SHIPS.find((ship) => ship.id === id);
+  getShipById: async (id, isMockMode = true) => {
+    if (isMockMode) {
+      const ship = MOCK_SHIPS.find((ship) => ship.id === id);
+      if (!ship) {
+        throw new Error("Ship not found in mock data");
+      }
+      return ship;
     }
 
     try {
       const response = await api.get(`/ships/${id}`);
+      if (!response.data) {
+        throw new Error("Ship not found");
+      }
       return response.data;
     } catch (error) {
-      console.warn("Failed to fetch ship from API, falling back to mock data");
-      return MOCK_SHIPS.find((ship) => ship.id === id);
+      console.error("Failed to fetch ship from API:", error);
+      throw new Error(
+        error.response?.data?.message ||
+          "Unable to fetch ship details. Please check your connection or try again later."
+      );
     }
   },
 
   // Update ship
-  updateShip: async (id, data) => {
-    if (USE_MOCK_DATA) {
-      return { ...MOCK_SHIPS.find((ship) => ship.id === id), ...data };
+  updateShip: async (id, data, isMockMode = true) => {
+    if (isMockMode) {
+      const ship = MOCK_SHIPS.find((ship) => ship.id === id);
+      if (!ship) {
+        throw new Error("Ship not found in mock data");
+      }
+      return { ...ship, ...data };
     }
 
     try {
       const response = await api.put(`/ships/${id}`, data);
       return response.data;
     } catch (error) {
-      handleApiError(error);
+      console.error("Failed to update ship:", error);
+      throw new Error(
+        error.response?.data?.message ||
+          "Unable to update ship details. Please check your connection or try again later."
+      );
     }
   },
 };

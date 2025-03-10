@@ -14,6 +14,8 @@ import StatCard from "../components/shared/StatCard";
 import L from "leaflet";
 import { renderToString } from "react-dom/server";
 import { shipService } from "../services/shipService";
+import { useMockMode } from "../context/MockModeContext";
+import MockModeToggle from "../components/shared/MockModeToggle";
 
 // Create custom ship icon
 const createShipIcon = (color) => {
@@ -62,6 +64,7 @@ const iconStyle = `
 `;
 
 const DashboardPage = () => {
+  const { isMockMode } = useMockMode();
   const [ships, setShips] = useState([]);
   const [dashboardStats, setDashboardStats] = useState(null);
   const [chartData, setChartData] = useState(null);
@@ -72,18 +75,23 @@ const DashboardPage = () => {
     const fetchDashboardData = async () => {
       try {
         setLoading(true);
+        setError(null);
+
         const [shipsData, stats, charts] = await Promise.all([
-          shipService.getAllShips(),
-          shipService.getDashboardStats(),
-          shipService.getChartData(),
+          shipService.getAllShips(isMockMode),
+          shipService.getDashboardStats(isMockMode),
+          shipService.getChartData(isMockMode),
         ]);
 
         setShips(shipsData);
         setDashboardStats(stats);
         setChartData(charts);
-        setError(null);
       } catch (err) {
-        setError("Failed to load dashboard data");
+        setError(
+          !isMockMode
+            ? "Failed to fetch live data. Please check your API connection or switch to Mock Mode."
+            : "Failed to load dashboard data"
+        );
         console.error("Dashboard data error:", err);
       } finally {
         setLoading(false);
@@ -91,7 +99,7 @@ const DashboardPage = () => {
     };
 
     fetchDashboardData();
-  }, []);
+  }, [isMockMode]);
 
   const chartOptions = {
     responsive: true,
@@ -143,6 +151,7 @@ const DashboardPage = () => {
         <div className="max-w-7xl mx-auto">
           <div className="text-center">Loading dashboard data...</div>
         </div>
+        <MockModeToggle />
       </div>
     );
   }
@@ -153,6 +162,7 @@ const DashboardPage = () => {
         <div className="max-w-7xl mx-auto">
           <div className="text-center text-red-500">{error}</div>
         </div>
+        <MockModeToggle />
       </div>
     );
   }
@@ -225,6 +235,10 @@ const DashboardPage = () => {
                         <h3 className="font-bold">{ship.name}</h3>
                         <p>IMO: {ship.imo}</p>
                         <p>Status: {ship.status}</p>
+                        <p>
+                          Position: {ship.position.latitude.toFixed(4)}°N,{" "}
+                          {ship.position.longitude.toFixed(4)}°E
+                        </p>
                         <p>
                           Wind Speed: {ship.statistics.wind_speed.avg} knots
                         </p>
@@ -353,6 +367,7 @@ const DashboardPage = () => {
           ))}
         </div>
       </div>
+      <MockModeToggle />
     </div>
   );
 };

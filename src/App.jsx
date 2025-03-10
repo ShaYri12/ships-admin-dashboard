@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 
 import Sidebar from "./components/shared/Sidebar";
+import { MockModeProvider } from "./context/MockModeContext";
 
 import DashboardPage from "./pages/DashboardPage";
 import ShipsPage from "./pages/ShipsPage";
@@ -72,61 +73,63 @@ function App() {
   }
 
   return (
-    <div className="flex h-screen bg-gray-900 text-gray-100">
-      {/* Background with blur */}
-      <div className="fixed inset-0 z-0">
-        <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 opacity-80" />
-      </div>
+    <MockModeProvider>
+      <div className="flex h-screen bg-gray-900 text-gray-100">
+        {/* Background with blur */}
+        <div className="fixed inset-0 z-0">
+          <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 opacity-80" />
+        </div>
 
-      {/* Content */}
-      <div className="relative z-10 flex w-full h-full">
-        <Sidebar />
-        <main className="flex-1 relative overflow-auto">
-          <Routes>
-            <Route
-              path="/"
-              element={
-                <ProtectedRoute>
-                  <DashboardPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/ships"
-              element={
-                <ProtectedRoute>
-                  <ShipsPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/users"
-              element={
-                <ProtectedRoute adminOnly>
-                  <UsersPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/weather"
-              element={
-                <ProtectedRoute>
-                  <WeatherPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/settings"
-              element={
-                <ProtectedRoute>
-                  <SettingsPage />
-                </ProtectedRoute>
-              }
-            />
-          </Routes>
-        </main>
+        {/* Content */}
+        <div className="relative z-10 flex w-full h-full">
+          <Sidebar />
+          <main className="flex-1 relative overflow-auto">
+            <Routes>
+              <Route
+                path="/"
+                element={
+                  <ProtectedRoute>
+                    <DashboardPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/ships"
+                element={
+                  <ProtectedRoute>
+                    <ShipsPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/users"
+                element={
+                  <ProtectedRoute adminOnly>
+                    <UsersPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/weather"
+                element={
+                  <ProtectedRoute>
+                    <WeatherPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/settings"
+                element={
+                  <ProtectedRoute>
+                    <SettingsPage />
+                  </ProtectedRoute>
+                }
+              />
+            </Routes>
+          </main>
+        </div>
       </div>
-    </div>
+    </MockModeProvider>
   );
 }
 

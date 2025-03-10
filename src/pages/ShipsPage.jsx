@@ -26,6 +26,8 @@ import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import { renderToString } from "react-dom/server";
 import { shipService } from "../services/shipService";
+import { useMockMode } from "../context/MockModeContext";
+import MockModeToggle from "../components/shared/MockModeToggle";
 
 // Register ChartJS components
 ChartJS.register(
@@ -98,6 +100,7 @@ const MapController = ({ center }) => {
 };
 
 const ShipsPage = () => {
+  const { isMockMode } = useMockMode();
   const [selectedShip, setSelectedShip] = useState(null);
   const [ships, setShips] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -107,12 +110,16 @@ const ShipsPage = () => {
     const fetchShips = async () => {
       try {
         setLoading(true);
-        const shipsData = await shipService.getAllShips();
+        setError(null);
+        const shipsData = await shipService.getAllShips(isMockMode);
         setShips(shipsData);
         setSelectedShip(shipsData[0]);
-        setError(null);
       } catch (err) {
-        setError("Failed to load ships data");
+        setError(
+          !isMockMode
+            ? "Failed to fetch live data. Please check your API connection or switch to Mock Mode."
+            : "Failed to load ships data"
+        );
         console.error("Ships data error:", err);
       } finally {
         setLoading(false);
@@ -120,7 +127,7 @@ const ShipsPage = () => {
     };
 
     fetchShips();
-  }, []);
+  }, [isMockMode]);
 
   // Function to handle ship selection
   const handleShipChange = (e) => {
@@ -189,6 +196,7 @@ const ShipsPage = () => {
         <div className="max-w-7xl mx-auto">
           <div className="text-center">Loading ships data...</div>
         </div>
+        <MockModeToggle />
       </div>
     );
   }
@@ -199,6 +207,7 @@ const ShipsPage = () => {
         <div className="max-w-7xl mx-auto">
           <div className="text-center text-red-500">{error}</div>
         </div>
+        <MockModeToggle />
       </div>
     );
   }
@@ -209,6 +218,7 @@ const ShipsPage = () => {
         <div className="max-w-7xl mx-auto">
           <div className="text-center">No ships available</div>
         </div>
+        <MockModeToggle />
       </div>
     );
   }
@@ -379,6 +389,10 @@ const ShipsPage = () => {
                     <p>IMO: {selectedShip.imo}</p>
                     <p>Status: {selectedShip.status}</p>
                     <p>
+                      Position: {selectedShip.position.latitude.toFixed(4)}°N,{" "}
+                      {selectedShip.position.longitude.toFixed(4)}°E
+                    </p>
+                    <p>
                       Wind Speed: {selectedShip.statistics.wind_speed.avg} knots
                     </p>
                     <p className="text-xs text-gray-600">
@@ -499,6 +513,7 @@ const ShipsPage = () => {
           </div>
         </div>
       </div>
+      <MockModeToggle />
     </div>
   );
 };
