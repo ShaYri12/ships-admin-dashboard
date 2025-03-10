@@ -56,6 +56,9 @@ const userSchema = new mongoose.Schema(
 
 // Hash password before saving (only for admin users)
 userSchema.pre("save", async function (next) {
+  // Skip password hashing for admin creation since we handle it manually
+  if (this.isNew && this.role === "admin") return next();
+
   if (!this.isModified("password") || this.role !== "admin") return next();
 
   try {

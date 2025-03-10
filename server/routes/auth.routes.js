@@ -2,6 +2,7 @@ import express from "express";
 import jwt from "jsonwebtoken";
 import User from "../models/user.model.js";
 import { protect } from "../middleware/auth.middleware.js";
+import bcrypt from "bcryptjs";
 
 const router = express.Router();
 
@@ -9,23 +10,55 @@ const router = express.Router();
 router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
+    console.log("Login attempt for email:", email);
 
     // Validate required fields
     if (!email || !password) {
+      console.log("Missing email or password");
       return res.status(400).json({
         message: "Please provide both email and password",
       });
     }
 
-    // Find user and ensure they are an admin
+    // Find user by email
     const user = await User.findOne({ email });
-    if (!user || user.status !== "active" || user.role !== "admin") {
+    console.log(
+      "Found user:",
+      user
+        ? {
+            id: user._id,
+            email: user.email,
+            role: user.role,
+            status: user.status,
+            hasPassword: !!user.password,
+          }
+        : "No user found"
+    );
+
+    // If no user found or user is not active, return error
+    if (!user) {
+      console.log("No user found with this email");
       return res.status(401).json({ message: "Invalid credentials" });
     }
 
+    if (user.status !== "active") {
+      console.log("User is not active");
+      return res.status(401).json({ message: "Invalid credentials" });
+    }
+
+    // For non-admin users or invalid credentials, return error
+    if (user.role !== "admin") {
+      console.log("User is not an admin");
+      return res.status(401).json({ message: "Only admin users can login" });
+    }
+
     // Check password
-    const isMatch = await user.comparePassword(password);
+    console.log("Comparing passwords...");
+    const isMatch = await bcrypt.compare(password, user.password);
+    console.log("Password match:", isMatch);
+
     if (!isMatch) {
+      console.log("Password does not match");
       return res.status(401).json({ message: "Invalid credentials" });
     }
 
@@ -53,12 +86,15 @@ router.post("/login", async (req, res) => {
       assignedShip: user.assignedShip,
     };
 
+    console.log("Login successful for user:", userData);
+
     // Store in localStorage through client response
     res.json({
       ...userData,
       token, // Include token in response for localStorage
     });
   } catch (error) {
+    console.error("Login error:", error);
     res.status(500).json({ message: "Server error", error: error.message });
   }
 });

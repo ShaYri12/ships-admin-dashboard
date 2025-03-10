@@ -16,14 +16,19 @@ const app = express();
 // Function to initialize default admin
 const initializeDefaultAdmin = async () => {
   try {
+    console.log("Checking for existing admin...");
     const adminExists = await User.findOne({
       email: "admin@ships.com",
       role: "admin",
     });
 
     if (!adminExists) {
+      console.log("No admin found, creating default admin...");
       const salt = await bcrypt.genSalt(10);
       const hashedPassword = await bcrypt.hash("admin123", salt);
+
+      // Create a temporary ObjectId for the first admin
+      const tempAdminId = new mongoose.Types.ObjectId();
 
       const admin = new User({
         name: "admin",
@@ -31,13 +36,32 @@ const initializeDefaultAdmin = async () => {
         password: hashedPassword,
         role: "admin",
         status: "active",
-        createdBy: null, // First admin
+        createdBy: tempAdminId, // Set the admin as their own creator
       });
 
       await admin.save();
-      console.log("Default admin created successfully");
+      console.log("Admin saved with initial data:", {
+        id: admin._id,
+        email: admin.email,
+        role: admin.role,
+        status: admin.status,
+        hasPassword: !!admin.password,
+      });
+
+      // Update the admin to set createdBy to their own ID
+      await User.findByIdAndUpdate(admin._id, {
+        createdBy: admin._id,
+      });
+
+      console.log("Default admin created and updated successfully");
     } else {
-      console.log("Default admin already exists");
+      console.log("Existing admin found:", {
+        id: adminExists._id,
+        email: adminExists.email,
+        role: adminExists.role,
+        status: adminExists.status,
+        hasPassword: !!adminExists.password,
+      });
     }
   } catch (error) {
     console.error("Error initializing admin:", error);
@@ -70,9 +94,27 @@ mongoose
     // Initialize default admin after connection
     await initializeDefaultAdmin();
 
-    app.listen(process.env.PORT || 3000, () => {
-      console.log(`Server running on port ${process.env.PORT || 3000}`);
-    });
+    const startServer = (port) => {
+      try {
+        app
+          .listen(port, () => {
+            console.log(`Server running on port ${port}`);
+          })
+          .on("error", (err) => {
+            if (err.code === "EADDRINUSE") {
+              console.log(`Port ${port} is busy, trying ${port + 1}...`);
+              startServer(port + 1);
+            } else {
+              console.error("Server error:", err);
+            }
+          });
+      } catch (error) {
+        console.error("Failed to start server:", error);
+      }
+    };
+
+    // Start server with initial port
+    startServer(process.env.PORT || 3000);
   })
   .catch((error) => {
     console.error("MongoDB connection error:", error);
