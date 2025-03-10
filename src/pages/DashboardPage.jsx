@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
   MapContainer,
   TileLayer,
@@ -13,6 +13,7 @@ import { Line, Pie, Bar } from "react-chartjs-2";
 import StatCard from "../components/shared/StatCard";
 import L from "leaflet";
 import { renderToString } from "react-dom/server";
+import { shipService } from "../services/shipService";
 
 // Create custom ship icon
 const createShipIcon = (color) => {
@@ -60,216 +61,102 @@ const iconStyle = `
   }
 `;
 
-// Mock data from JSON files
-const MOCK_SHIPS = [
-  {
-    id: 1,
-    name: "Vlad Container",
-    imo: "5550011",
-    position: [52.3708, 4.8958],
-    status: "En Route",
-    destination: "Rotterdam",
-    eta: "2024-03-10",
-    path: [
-      [52.3702, 4.8952], // Amsterdam Port
-      [52.422, 4.58], // North Sea Canal
-      [52.4632, 4.5552], // IJmuiden (Sea Entry)
-      [52.5, 4.2], // North Sea Route
-      [52.45, 3.9], // Offshore Route Start
-      [52.2, 3.7], // North Sea Shipping Lane
-      [51.99, 3.8], // Rotterdam Approach
-      [51.9581, 4.0494], // Europoort Entry
-      [51.9225, 4.4792], // Rotterdam Port
-    ],
-    color: "#6366f1",
-    windSpeed: 15.7,
-    fanSpeed: 3.9,
-    statistics: {
-      wind_speed: {
-        avg: 15.7,
-        max: 19.3,
-        min: 12.2,
-      },
-      fan_speed: {
-        avg: 3.9,
-        max: 4.4,
-        min: 3.1,
-      },
-    },
-  },
-  {
-    id: 2,
-    name: "Paulo Tanker",
-    imo: "5550022",
-    position: [34.0528, -118.2442],
-    status: "En Route",
-    destination: "San Francisco",
-    eta: "2024-03-15",
-    path: [
-      [34.0528, -118.2442], // Port of LA
-      [33.7157, -118.652], // LA Harbor Exit
-      [33.8, -119.5], // Santa Barbara Channel
-      [34.2, -120.7], // Offshore Route
-      [35.5, -121.8], // Central California Coast
-      [36.8, -122.5], // Monterey Bay Approach
-      [37.5, -122.8], // SF Approach
-      [37.7749, -122.4194], // San Francisco Port
-    ],
-    color: "#8B5CF6",
-    windSpeed: 13.4,
-    fanSpeed: 3.3,
-    statistics: {
-      wind_speed: {
-        avg: 13.4,
-        max: 16.0,
-        min: 11.0,
-      },
-      fan_speed: {
-        avg: 3.3,
-        max: 4.0,
-        min: 2.7,
-      },
-    },
-  },
-  {
-    id: 3,
-    name: "Evy Yacht",
-    imo: "5550033",
-    position: [48.857, 2.3528],
-    status: "En Route",
-    destination: "Mediterranean",
-    eta: "2024-03-20",
-    path: [
-      [48.8566, 2.3522], // Paris (Seine River)
-      [49.4897, 0.1089], // Le Havre (Seine Estuary)
-      [49.85, -1.6], // English Channel Entry
-      [49.6, -3], // English Channel Entry
-      [48.8, -5.0], // Brest Approach
-      [47.5, -5.0], // Bay of Biscay North
-      [45.8, -3.5], // Bay of Biscay Central
-      [44.5, -3.0], // Bay of Biscay South
-      [43.8, -2.0], // Spanish Coast North
-      [43.36, -2.0], // Spanish Coast
-      [43.2, -1.8], // Bay of Biscay Exit
-    ],
-    color: "#EC4899",
-    windSpeed: 12.1,
-    fanSpeed: 2.9,
-    statistics: {
-      wind_speed: {
-        avg: 12.1,
-        max: 14.0,
-        min: 10.0,
-      },
-      fan_speed: {
-        avg: 2.9,
-        max: 3.5,
-        min: 2.5,
-      },
-    },
-  },
-];
-
-// Update dashboard stats based on mock data averages
-const DASHBOARD_STATS = {
-  activeShips: MOCK_SHIPS.length.toString(),
-  totalCargo: "45,678 tons",
-  fuelConsumption: "1,234 tons",
-  avgSpeed: `${(
-    MOCK_SHIPS.reduce((acc, ship) => acc + ship.windSpeed, 0) /
-    MOCK_SHIPS.length
-  ).toFixed(1)} knots`,
-};
-
-// Chart data
-const shipTypeData = {
-  labels: ["Cargo Ships", "Tankers", "Container Ships", "Bulk Carriers"],
-  datasets: [
-    {
-      data: [35, 25, 20, 20],
-      backgroundColor: [
-        "rgba(99, 102, 241, 0.8)",
-        "rgba(139, 92, 246, 0.8)",
-        "rgba(236, 72, 153, 0.8)",
-        "rgba(16, 185, 129, 0.8)",
-      ],
-      borderColor: "rgba(255, 255, 255, 0.1)",
-    },
-  ],
-};
-
-const monthlyCargoData = {
-  labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun"],
-  datasets: [
-    {
-      label: "Cargo Volume (tons)",
-      data: [45000, 52000, 49000, 47000, 53000, 51000],
-      backgroundColor: "rgba(99, 102, 241, 0.8)",
-      borderColor: "rgba(99, 102, 241, 1)",
-      borderWidth: 2,
-    },
-  ],
-};
-
-const fuelEfficiencyData = {
-  labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun"],
-  datasets: [
-    {
-      label: "Fuel Efficiency (nm/ton)",
-      data: [12.5, 12.8, 12.3, 12.9, 12.6, 12.7],
-      borderColor: "rgba(236, 72, 153, 1)",
-      backgroundColor: "rgba(236, 72, 153, 0.1)",
-      tension: 0.4,
-      fill: true,
-    },
-  ],
-};
-
-const chartOptions = {
-  responsive: true,
-  maintainAspectRatio: false,
-  scales: {
-    y: {
-      beginAtZero: true,
-      grid: {
-        color: "rgba(255, 255, 255, 0.1)",
-      },
-      ticks: {
-        color: "rgba(255, 255, 255, 0.8)",
-      },
-    },
-    x: {
-      grid: {
-        color: "rgba(255, 255, 255, 0.1)",
-      },
-      ticks: {
-        color: "rgba(255, 255, 255, 0.8)",
-      },
-    },
-  },
-  plugins: {
-    legend: {
-      labels: {
-        color: "rgba(255, 255, 255, 0.8)",
-      },
-    },
-  },
-};
-
-const pieOptions = {
-  responsive: true,
-  maintainAspectRatio: false,
-  plugins: {
-    legend: {
-      position: "right",
-      labels: {
-        color: "rgba(255, 255, 255, 0.8)",
-      },
-    },
-  },
-};
-
 const DashboardPage = () => {
+  const [ships, setShips] = useState([]);
+  const [dashboardStats, setDashboardStats] = useState(null);
+  const [chartData, setChartData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        setLoading(true);
+        const [shipsData, stats, charts] = await Promise.all([
+          shipService.getAllShips(),
+          shipService.getDashboardStats(),
+          shipService.getChartData(),
+        ]);
+
+        setShips(shipsData);
+        setDashboardStats(stats);
+        setChartData(charts);
+        setError(null);
+      } catch (err) {
+        setError("Failed to load dashboard data");
+        console.error("Dashboard data error:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+  }, []);
+
+  const chartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    scales: {
+      y: {
+        beginAtZero: true,
+        grid: {
+          color: "rgba(255, 255, 255, 0.1)",
+        },
+        ticks: {
+          color: "rgba(255, 255, 255, 0.8)",
+        },
+      },
+      x: {
+        grid: {
+          color: "rgba(255, 255, 255, 0.1)",
+        },
+        ticks: {
+          color: "rgba(255, 255, 255, 0.8)",
+        },
+      },
+    },
+    plugins: {
+      legend: {
+        labels: {
+          color: "rgba(255, 255, 255, 0.8)",
+        },
+      },
+    },
+  };
+
+  const pieOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: "right",
+        labels: {
+          color: "rgba(255, 255, 255, 0.8)",
+        },
+      },
+    },
+  };
+
+  if (loading) {
+    return (
+      <div className="p-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center">Loading dashboard data...</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center text-red-500">{error}</div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="p-8">
       <div className="max-w-7xl mx-auto">
@@ -285,25 +172,25 @@ const DashboardPage = () => {
           <StatCard
             name="Active Ships"
             icon={Ship}
-            value={DASHBOARD_STATS.activeShips}
+            value={dashboardStats.activeShips}
             color="#6366f1"
           />
           <StatCard
             name="Total Cargo"
             icon={Anchor}
-            value={DASHBOARD_STATS.totalCargo}
+            value={dashboardStats.totalCargo}
             color="#8B5CF6"
           />
           <StatCard
             name="Fuel Consumption"
             icon={Fuel}
-            value={DASHBOARD_STATS.fuelConsumption}
+            value={dashboardStats.fuelConsumption}
             color="#EC4899"
           />
           <StatCard
             name="Average Speed"
             icon={Navigation}
-            value={DASHBOARD_STATS.avgSpeed}
+            value={dashboardStats.avgSpeed}
             color="#10B981"
           />
         </motion.div>
@@ -325,11 +212,11 @@ const DashboardPage = () => {
                 url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
               />
-              {MOCK_SHIPS.map((ship) => (
+              {ships.map((ship) => (
                 <React.Fragment key={ship.id}>
                   {/* Current Position with Ship Icon */}
                   <Marker
-                    position={ship.position}
+                    position={[ship.position.latitude, ship.position.longitude]}
                     icon={createShipIcon(ship.color)}
                     zIndexOffset={1000}
                   >
@@ -407,7 +294,7 @@ const DashboardPage = () => {
           <div className="bg-gray-800 bg-opacity-50 backdrop-blur-md overflow-hidden shadow-lg rounded-xl border border-gray-700 p-6">
             <h3 className="text-lg font-semibold mb-4">Fleet Distribution</h3>
             <div className="h-[300px]">
-              <Pie data={shipTypeData} options={pieOptions} />
+              <Pie data={chartData.shipTypes} options={pieOptions} />
             </div>
           </div>
 
@@ -415,7 +302,7 @@ const DashboardPage = () => {
           <div className="bg-gray-800 bg-opacity-50 backdrop-blur-md overflow-hidden shadow-lg rounded-xl border border-gray-700 p-6">
             <h3 className="text-lg font-semibold mb-4">Monthly Cargo Volume</h3>
             <div className="h-[300px]">
-              <Bar data={monthlyCargoData} options={chartOptions} />
+              <Bar data={chartData.monthlyCargoVolume} options={chartOptions} />
             </div>
           </div>
         </div>
@@ -426,13 +313,13 @@ const DashboardPage = () => {
             Fleet Fuel Efficiency Trend
           </h3>
           <div className="h-[300px]">
-            <Line data={fuelEfficiencyData} options={chartOptions} />
+            <Line data={chartData.fuelEfficiency} options={chartOptions} />
           </div>
         </div>
 
         {/* Ships Overview */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
-          {MOCK_SHIPS.map((ship) => (
+          {ships.map((ship) => (
             <motion.div
               key={ship.id}
               className="bg-gray-800 bg-opacity-50 backdrop-blur-md overflow-hidden shadow-lg rounded-xl border border-gray-700"

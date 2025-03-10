@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Line, Bar, Doughnut, Pie } from "react-chartjs-2";
 import {
   Chart as ChartJS,
@@ -25,6 +25,7 @@ import {
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import { renderToString } from "react-dom/server";
+import { shipService } from "../services/shipService";
 
 // Register ChartJS components
 ChartJS.register(
@@ -38,368 +39,6 @@ ChartJS.register(
   Tooltip,
   Legend
 );
-
-// Mock data from JSON files
-const MOCK_SHIPS = [
-  {
-    id: 1,
-    name: "Vlad Container",
-    imo: "5550011",
-    type: "Container Ship",
-    status: "En Route",
-    destination: "Rotterdam",
-    eta: "2024-03-10",
-    position: {
-      latitude: 52.3708,
-      longitude: 4.8958,
-    },
-    path: [
-      [52.3702, 4.8952], // Amsterdam Port
-      [52.422, 4.58], // North Sea Canal
-      [52.4632, 4.5552], // IJmuiden (Sea Entry)
-      [52.5, 4.2], // North Sea Route
-      [52.45, 3.9], // Offshore Route Start
-      [52.2, 3.7], // North Sea Shipping Lane
-      [51.99, 3.8], // Rotterdam Approach
-      [51.9581, 4.0494], // Europoort Entry
-      [51.9225, 4.4792], // Rotterdam Port
-    ],
-    color: "#6366f1",
-    performanceData: {
-      labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun"],
-      datasets: [
-        {
-          label: "Wind Speed (knots)",
-          data: [15.7, 16.2, 15.9, 15.5, 16.0, 15.8],
-          borderColor: "#6366f1",
-          backgroundColor: "rgba(99, 102, 241, 0.1)",
-          tension: 0.4,
-        },
-        {
-          label: "Fan Speed",
-          data: [3.9, 4.0, 3.8, 3.7, 4.1, 3.9],
-          borderColor: "#8B5CF6",
-          backgroundColor: "rgba(139, 92, 246, 0.1)",
-          tension: 0.4,
-        },
-      ],
-    },
-    cargoData: {
-      labels: ["Container", "Bulk", "Vehicle", "Other"],
-      datasets: [
-        {
-          data: [450, 150, 200, 100],
-          backgroundColor: [
-            "rgba(99, 102, 241, 0.8)",
-            "rgba(139, 92, 246, 0.8)",
-            "rgba(236, 72, 153, 0.8)",
-            "rgba(16, 185, 129, 0.8)",
-          ],
-        },
-      ],
-    },
-    maintenanceData: {
-      labels: [
-        "Engine",
-        "Hull",
-        "Electronics",
-        "Safety",
-        "Navigation",
-        "Other",
-      ],
-      datasets: [
-        {
-          label: "Maintenance Hours",
-          data: [24, 12, 8, 16, 10, 6],
-          backgroundColor: "rgba(99, 102, 241, 0.8)",
-        },
-      ],
-    },
-    wingRotationData: {
-      labels: Array.from({ length: 24 }, (_, i) => i * 10),
-      datasets: [
-        {
-          label: "Wing Rotation Angle",
-          data: Array.from({ length: 24 }, () =>
-            Math.floor(Math.random() * 200)
-          ),
-          borderColor: "#6366f1",
-          backgroundColor: "rgb(99, 102, 241)",
-          barThickness: 8,
-        },
-      ],
-    },
-    windSpeedData: {
-      labels: [
-        "2024-10-01",
-        "2024-11-01",
-        "2024-12-01",
-        "2025-01-01",
-        "2025-02-01",
-      ],
-      datasets: [
-        {
-          label: "Wind Speed",
-          data: [15.7, 16.2, 15.9, 15.5, 16.0],
-          borderColor: "#8B5CF6",
-          backgroundColor: "rgba(139, 92, 246, 0.1)",
-          tension: 0.4,
-        },
-      ],
-    },
-    statistics: {
-      wind_speed: {
-        avg: 15.7,
-        max: 19.3,
-        min: 12.2,
-      },
-      fan_speed: {
-        avg: 3.9,
-        max: 4.4,
-        min: 3.1,
-      },
-    },
-  },
-  {
-    id: 2,
-    name: "Paulo Tanker",
-    imo: "5550022",
-    type: "Oil Tanker",
-    status: "En Route",
-    destination: "San Francisco",
-    eta: "2024-03-15",
-    position: {
-      latitude: 34.0528,
-      longitude: -118.2442,
-    },
-    path: [
-      [34.0528, -118.2442], // Port of LA
-      [33.7157, -118.652], // LA Harbor Exit
-      [33.8, -119.5], // Santa Barbara Channel
-      [34.2, -120.7], // Offshore Route
-      [35.5, -121.8], // Central California Coast
-      [36.8, -122.5], // Monterey Bay Approach
-      [37.5, -122.8], // SF Approach
-      [37.7749, -122.4194], // San Francisco Port
-    ],
-    color: "#8B5CF6",
-    performanceData: {
-      labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun"],
-      datasets: [
-        {
-          label: "Wind Speed (knots)",
-          data: [13.4, 13.8, 13.2, 13.6, 13.9, 13.5],
-          borderColor: "#8B5CF6",
-          backgroundColor: "rgba(139, 92, 246, 0.1)",
-          tension: 0.4,
-        },
-        {
-          label: "Fan Speed",
-          data: [3.3, 3.5, 3.2, 3.4, 3.6, 3.3],
-          borderColor: "#8B5CF6",
-          backgroundColor: "rgba(139, 92, 246, 0.1)",
-          tension: 0.4,
-        },
-      ],
-    },
-    cargoData: {
-      labels: ["Crude Oil", "Refined Oil", "Chemicals", "Empty"],
-      datasets: [
-        {
-          data: [400, 300, 200, 100],
-          backgroundColor: [
-            "rgba(99, 102, 241, 0.8)",
-            "rgba(139, 92, 246, 0.8)",
-            "rgba(236, 72, 153, 0.8)",
-            "rgba(16, 185, 129, 0.8)",
-          ],
-        },
-      ],
-    },
-    maintenanceData: {
-      labels: [
-        "Engine",
-        "Hull",
-        "Electronics",
-        "Safety",
-        "Navigation",
-        "Other",
-      ],
-      datasets: [
-        {
-          label: "Maintenance Hours",
-          data: [30, 15, 10, 20, 12, 8],
-          backgroundColor: "rgba(139, 92, 246, 0.8)",
-        },
-      ],
-    },
-    wingRotationData: {
-      labels: Array.from({ length: 24 }, (_, i) => i * 10),
-      datasets: [
-        {
-          label: "Wing Rotation Angle",
-          data: Array.from({ length: 24 }, () =>
-            Math.floor(Math.random() * 180)
-          ),
-          borderColor: "#8B5CF6",
-          backgroundColor: "rgb(139, 92, 246)",
-          barThickness: 8,
-        },
-      ],
-    },
-    windSpeedData: {
-      labels: [
-        "2024-10-01",
-        "2024-11-01",
-        "2024-12-01",
-        "2025-01-01",
-        "2025-02-01",
-      ],
-      datasets: [
-        {
-          label: "Wind Speed",
-          data: [13.4, 13.8, 13.2, 13.6, 13.9],
-          borderColor: "#8B5CF6",
-          backgroundColor: "rgba(139, 92, 246, 0.1)",
-          tension: 0.4,
-        },
-      ],
-    },
-    statistics: {
-      wind_speed: {
-        avg: 13.4,
-        max: 16.0,
-        min: 11.0,
-      },
-      fan_speed: {
-        avg: 3.3,
-        max: 4.0,
-        min: 2.7,
-      },
-    },
-  },
-  {
-    id: 3,
-    name: "Evy Yacht",
-    imo: "5550033",
-    type: "Yacht",
-    status: "En Route",
-    destination: "Mediterranean",
-    eta: "2024-03-20",
-    position: {
-      latitude: 48.857,
-      longitude: 2.3528,
-    },
-    path: [
-      [48.8566, 2.3522], // Paris (Seine River)
-      [49.4897, 0.1089], // Le Havre (Seine Estuary)
-      [49.85, -1.6], // English Channel Entry
-      [49.6, -3], // English Channel Entry
-      [48.8, -5.0], // Brest Approach
-      [47.5, -5.0], // Bay of Biscay North
-      [45.8, -3.5], // Bay of Biscay Central
-      [44.5, -3.0], // Bay of Biscay South
-      [43.8, -2.0], // Spanish Coast North
-      [43.36, -2.0], // Spanish Coast
-      [43.2, -1.8], // Bay of Biscay Exit
-    ],
-    color: "#EC4899",
-    performanceData: {
-      labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun"],
-      datasets: [
-        {
-          label: "Wind Speed (knots)",
-          data: [12.1, 12.5, 12.0, 12.3, 12.6, 12.2],
-          borderColor: "#EC4899",
-          backgroundColor: "rgba(236, 72, 153, 0.1)",
-          tension: 0.4,
-        },
-        {
-          label: "Fan Speed",
-          data: [2.9, 3.1, 2.8, 3.0, 3.2, 2.9],
-          borderColor: "#EC4899",
-          backgroundColor: "rgba(236, 72, 153, 0.1)",
-          tension: 0.4,
-        },
-      ],
-    },
-    cargoData: {
-      labels: ["Passengers", "Supplies", "Equipment", "Other"],
-      datasets: [
-        {
-          data: [150, 100, 50, 50],
-          backgroundColor: [
-            "rgba(99, 102, 241, 0.8)",
-            "rgba(139, 92, 246, 0.8)",
-            "rgba(236, 72, 153, 0.8)",
-            "rgba(16, 185, 129, 0.8)",
-          ],
-        },
-      ],
-    },
-    maintenanceData: {
-      labels: [
-        "Engine",
-        "Hull",
-        "Electronics",
-        "Safety",
-        "Navigation",
-        "Other",
-      ],
-      datasets: [
-        {
-          label: "Maintenance Hours",
-          data: [20, 10, 8, 15, 10, 5],
-          backgroundColor: "rgba(236, 72, 153, 0.8)",
-        },
-      ],
-    },
-    wingRotationData: {
-      labels: Array.from({ length: 24 }, (_, i) => i * 10),
-      datasets: [
-        {
-          label: "Wing Rotation Angle",
-          data: Array.from({ length: 24 }, () =>
-            Math.floor(Math.random() * 160)
-          ),
-          borderColor: "#EC4899",
-          backgroundColor: "rgb(236, 72, 153)",
-          barThickness: 8,
-        },
-      ],
-    },
-    windSpeedData: {
-      labels: [
-        "2024-10-01",
-        "2024-11-01",
-        "2024-12-01",
-        "2025-01-01",
-        "2025-02-01",
-      ],
-      datasets: [
-        {
-          label: "Wind Speed",
-          data: [12.1, 12.5, 12.0, 12.3, 12.6],
-          borderColor: "#EC4899",
-          backgroundColor: "rgba(236, 72, 153, 0.1)",
-          tension: 0.4,
-        },
-      ],
-    },
-    statistics: {
-      wind_speed: {
-        avg: 12.1,
-        max: 14.0,
-        min: 10.0,
-      },
-      fan_speed: {
-        avg: 2.9,
-        max: 3.5,
-        min: 2.5,
-      },
-    },
-  },
-];
 
 // Create custom ship icon
 const createShipIcon = (color) => {
@@ -459,13 +98,33 @@ const MapController = ({ center }) => {
 };
 
 const ShipsPage = () => {
-  const [selectedShip, setSelectedShip] = useState(MOCK_SHIPS[0]);
+  const [selectedShip, setSelectedShip] = useState(null);
+  const [ships, setShips] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchShips = async () => {
+      try {
+        setLoading(true);
+        const shipsData = await shipService.getAllShips();
+        setShips(shipsData);
+        setSelectedShip(shipsData[0]);
+        setError(null);
+      } catch (err) {
+        setError("Failed to load ships data");
+        console.error("Ships data error:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchShips();
+  }, []);
 
   // Function to handle ship selection
   const handleShipChange = (e) => {
-    const newSelectedShip = MOCK_SHIPS.find(
-      (s) => s.id === Number(e.target.value)
-    );
+    const newSelectedShip = ships.find((s) => s.id === Number(e.target.value));
     setSelectedShip(newSelectedShip);
   };
 
@@ -524,6 +183,36 @@ const ShipsPage = () => {
     },
   };
 
+  if (loading) {
+    return (
+      <div className="p-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center">Loading ships data...</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center text-red-500">{error}</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!selectedShip) {
+    return (
+      <div className="p-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center">No ships available</div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="p-8">
       <div className="max-w-7xl mx-auto">
@@ -535,7 +224,7 @@ const ShipsPage = () => {
               value={selectedShip.id}
               onChange={handleShipChange}
             >
-              {MOCK_SHIPS.map((ship) => (
+              {ships.map((ship) => (
                 <option key={ship.id} value={ship.id}>
                   {ship.name} (IMO: {ship.imo})
                 </option>
