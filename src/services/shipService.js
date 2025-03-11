@@ -1,115 +1,74 @@
-import { api, handleApiError } from "./api";
-import { MOCK_SHIPS, MOCK_DASHBOARD_STATS, MOCK_CHART_DATA } from "./mockData";
+import { shipDataService } from "./shipDataService";
+import { MOCK_SHIPS } from "./mockData";
 
-// Ship-related API calls
+// Development flag - set to true to use mock data
+const DEV_MODE = process.env.NODE_ENV === "development";
+
 export const shipService = {
-  // Get all ships
-  getAllShips: async (isMockMode = true) => {
-    if (isMockMode) {
-      return MOCK_SHIPS;
-    }
-
+  getAllShips: async (useMockData = true) => {
     try {
-      const response = await api.get("/ships");
-      if (!response.data || !Array.isArray(response.data)) {
-        throw new Error("Invalid data format received from API");
+      if (useMockData) {
+        console.log("Using mock ship data");
+        return MOCK_SHIPS;
       }
-      return response.data;
-    } catch (error) {
-      console.error("Failed to fetch ships from API:", error);
-      throw new Error(
-        error.response?.data?.message ||
-          "Unable to fetch ships data. Please check your connection or try again later."
+
+      const response = await shipDataService.getShipStatistics(
+        "all",
+        new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), // last 24 hours
+        new Date().toISOString()
       );
+
+      if (!response || !Array.isArray(response)) {
+        throw new Error("Invalid response format from API");
+      }
+
+      return response.map(shipDataService.transformShipData);
+    } catch (error) {
+      console.error("Failed to fetch ships:", error);
+      // Don't fall back to mock data, instead throw the error
+      throw error;
     }
   },
 
-  // Get dashboard statistics
-  getDashboardStats: async (isMockMode = true) => {
-    if (isMockMode) {
-      return MOCK_DASHBOARD_STATS;
-    }
-
+  updateShipData: async (shipData, useMockData = DEV_MODE) => {
     try {
-      const response = await api.get("/dashboard/stats");
-      if (!response.data) {
-        throw new Error("Invalid dashboard stats received from API");
+      if (useMockData) {
+        console.log("Using mock data for update");
+        return { success: true, data: shipData };
       }
-      return response.data;
+
+      const processedData = shipDataService.processShipRecord(shipData);
+      return await shipDataService.submitShipData(processedData);
     } catch (error) {
-      console.error("Failed to fetch dashboard stats from API:", error);
-      throw new Error(
-        error.response?.data?.message ||
-          "Unable to fetch dashboard statistics. Please check your connection or try again later."
-      );
+      console.error("Failed to update ship data:", error);
+      throw error;
     }
   },
 
-  // Get chart data
-  getChartData: async (isMockMode = true) => {
-    if (isMockMode) {
-      return MOCK_CHART_DATA;
-    }
-
+  getShipStatistics: async (
+    imo,
+    startTime,
+    endTime,
+    useMockData = DEV_MODE
+  ) => {
     try {
-      const response = await api.get("/dashboard/charts");
-      if (!response.data) {
-        throw new Error("Invalid chart data received from API");
+      if (useMockData) {
+        console.log("Using mock statistics data");
+        const mockShip = MOCK_SHIPS.find((ship) => ship.imo === imo);
+        return mockShip || null;
       }
-      return response.data;
-    } catch (error) {
-      console.error("Failed to fetch chart data from API:", error);
-      throw new Error(
-        error.response?.data?.message ||
-          "Unable to fetch chart data. Please check your connection or try again later."
+
+      const response = await shipDataService.getShipStatistics(
+        imo,
+        startTime,
+        endTime
       );
-    }
-  },
-
-  // Get single ship by ID
-  getShipById: async (id, isMockMode = true) => {
-    if (isMockMode) {
-      const ship = MOCK_SHIPS.find((ship) => ship.id === id);
-      if (!ship) {
-        throw new Error("Ship not found in mock data");
-      }
-      return ship;
-    }
-
-    try {
-      const response = await api.get(`/ships/${id}`);
-      if (!response.data) {
-        throw new Error("Ship not found");
-      }
-      return response.data;
+      return shipDataService.transformShipData(response);
     } catch (error) {
-      console.error("Failed to fetch ship from API:", error);
-      throw new Error(
-        error.response?.data?.message ||
-          "Unable to fetch ship details. Please check your connection or try again later."
-      );
-    }
-  },
-
-  // Update ship
-  updateShip: async (id, data, isMockMode = true) => {
-    if (isMockMode) {
-      const ship = MOCK_SHIPS.find((ship) => ship.id === id);
-      if (!ship) {
-        throw new Error("Ship not found in mock data");
-      }
-      return { ...ship, ...data };
-    }
-
-    try {
-      const response = await api.put(`/ships/${id}`, data);
-      return response.data;
-    } catch (error) {
-      console.error("Failed to update ship:", error);
-      throw new Error(
-        error.response?.data?.message ||
-          "Unable to update ship details. Please check your connection or try again later."
-      );
+      console.error("Failed to fetch ship statistics:", error);
+      // Fallback to mock data if API call fails
+      const mockShip = MOCK_SHIPS.find((ship) => ship.imo === imo);
+      return mockShip || null;
     }
   },
 };
