@@ -25,7 +25,7 @@ export const MOCK_SHIPS = [
     ],
     timeSeriesData: [
       {
-        timestamp: Date.now() - 8 * 60 * 60 * 1000,
+        timestamp: Math.floor((Date.now() - 8 * 60 * 60 * 1000) / 1000),
         wind_speed: 20,
         fan_speed: 0,
         windAngle: 125,
@@ -37,7 +37,7 @@ export const MOCK_SHIPS = [
         windDirection: 125,
       },
       {
-        timestamp: Date.now() - 7 * 60 * 60 * 1000,
+        timestamp: Math.floor((Date.now() - 7 * 60 * 60 * 1000) / 1000),
         wind_speed: 36,
         fan_speed: 0,
         windAngle: 125,
@@ -49,7 +49,7 @@ export const MOCK_SHIPS = [
         windDirection: 125,
       },
       {
-        timestamp: Date.now() - 6 * 60 * 60 * 1000,
+        timestamp: Math.floor((Date.now() - 6 * 60 * 60 * 1000) / 1000),
         wind_speed: 23,
         fan_speed: 0,
         windAngle: 125,
@@ -61,7 +61,7 @@ export const MOCK_SHIPS = [
         windDirection: 125,
       },
       {
-        timestamp: Date.now() - 5 * 60 * 60 * 1000,
+        timestamp: Math.floor((Date.now() - 5 * 60 * 60 * 1000) / 1000),
         wind_speed: 67,
         fan_speed: 0,
         windAngle: 125,
@@ -73,7 +73,7 @@ export const MOCK_SHIPS = [
         windDirection: 125,
       },
       {
-        timestamp: Date.now() - 4 * 60 * 60 * 1000,
+        timestamp: Math.floor((Date.now() - 4 * 60 * 60 * 1000) / 1000),
         wind_speed: 26,
         fan_speed: 0,
         windAngle: 125,
@@ -85,7 +85,7 @@ export const MOCK_SHIPS = [
         windDirection: 125,
       },
       {
-        timestamp: Date.now() - 3 * 60 * 60 * 1000,
+        timestamp: Math.floor((Date.now() - 3 * 60 * 60 * 1000) / 1000),
         wind_speed: 26,
         fan_speed: 0,
         windAngle: 125,
@@ -97,7 +97,7 @@ export const MOCK_SHIPS = [
         windDirection: 125,
       },
       {
-        timestamp: Date.now() - 2 * 60 * 60 * 1000,
+        timestamp: Math.floor((Date.now() - 2 * 60 * 60 * 1000) / 1000),
         wind_speed: 25,
         fan_speed: 0,
         windAngle: 125,
@@ -109,7 +109,7 @@ export const MOCK_SHIPS = [
         windDirection: 125,
       },
       {
-        timestamp: Date.now() - 1 * 60 * 60 * 1000,
+        timestamp: Math.floor((Date.now() - 1 * 60 * 60 * 1000) / 1000),
         wind_speed: 25,
         fan_speed: 0,
         windAngle: 125,
@@ -260,7 +260,7 @@ export const MOCK_SHIPS = [
     ],
     timeSeriesData: [
       {
-        timestamp: Date.now() - 8 * 60 * 60 * 1000,
+        timestamp: Math.floor((Date.now() - 8 * 60 * 60 * 1000) / 1000),
         wind_speed: 18,
         fan_speed: 0,
         windAngle: 130,
@@ -272,7 +272,7 @@ export const MOCK_SHIPS = [
         windDirection: 130,
       },
       {
-        timestamp: Date.now() - 7 * 60 * 60 * 1000,
+        timestamp: Math.floor((Date.now() - 7 * 60 * 60 * 1000) / 1000),
         wind_speed: 22,
         fan_speed: 0,
         windAngle: 130,
@@ -284,7 +284,7 @@ export const MOCK_SHIPS = [
         windDirection: 130,
       },
       {
-        timestamp: Date.now() - 6 * 60 * 60 * 1000,
+        timestamp: Math.floor((Date.now() - 6 * 60 * 60 * 1000) / 1000),
         wind_speed: 25,
         fan_speed: 0,
         windAngle: 130,
@@ -296,7 +296,7 @@ export const MOCK_SHIPS = [
         windDirection: 130,
       },
       {
-        timestamp: Date.now() - 5 * 60 * 60 * 1000,
+        timestamp: Math.floor((Date.now() - 5 * 60 * 60 * 1000) / 1000),
         wind_speed: 30,
         fan_speed: 0,
         windAngle: 130,
@@ -308,7 +308,7 @@ export const MOCK_SHIPS = [
         windDirection: 130,
       },
       {
-        timestamp: Date.now() - 4 * 60 * 60 * 1000,
+        timestamp: Math.floor((Date.now() - 4 * 60 * 60 * 1000) / 1000),
         wind_speed: 28,
         fan_speed: 0,
         windAngle: 130,
@@ -320,7 +320,7 @@ export const MOCK_SHIPS = [
         windDirection: 130,
       },
       {
-        timestamp: Date.now() - 3 * 60 * 60 * 1000,
+        timestamp: Math.floor((Date.now() - 3 * 60 * 60 * 1000) / 1000),
         wind_speed: 26,
         fan_speed: 0,
         windAngle: 130,
@@ -332,7 +332,7 @@ export const MOCK_SHIPS = [
         windDirection: 130,
       },
       {
-        timestamp: Date.now() - 2 * 60 * 60 * 1000,
+        timestamp: Math.floor((Date.now() - 2 * 60 * 60 * 1000) / 1000),
         wind_speed: 24,
         fan_speed: 0,
         windAngle: 130,
@@ -344,7 +344,7 @@ export const MOCK_SHIPS = [
         windDirection: 130,
       },
       {
-        timestamp: Date.now() - 1 * 60 * 60 * 1000,
+        timestamp: Math.floor((Date.now() - 1 * 60 * 60 * 1000) / 1000),
         wind_speed: 22,
         fan_speed: 0,
         windAngle: 130,

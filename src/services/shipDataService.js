@@ -19,8 +19,8 @@ export const shipDataService = {
 
         const response = await api.get(`/data/ships/${imo}/statistics`, {
           params: {
-            start_time: new Date(startTime).getTime(),
-            end_time: new Date(endTime).getTime(),
+            start_time: startTime,
+            end_time: endTime,
           },
         });
 
@@ -32,9 +32,16 @@ export const shipDataService = {
       }
 
       // If using mock data, return mock data based on the new API format
+      const shipName =
+        imo === "9996903"
+          ? "Amadeus Saffier"
+          : imo === "9996904"
+          ? "Paulo Tanker"
+          : "Unknown Ship";
+
       return {
         imo,
-        name: "Mock Ship",
+        name: shipName,
         results_meta: {
           data_points_collected: 8,
         },
@@ -55,7 +62,7 @@ export const shipDataService = {
         results_timed: [
           {
             uuid: "e3c34f74-571f-48ff-a2ca-26765b164bd0",
-            timestamp: Date.now() - 8 * 60 * 60 * 1000,
+            timestamp: Math.floor((Date.now() - 8 * 60 * 60 * 1000) / 1000),
             sailData: [
               {
                 windAngle: 125,
@@ -92,7 +99,7 @@ export const shipDataService = {
           },
           {
             uuid: "18a81973-6019-4961-b692-f30f10a4a130",
-            timestamp: Date.now() - 7 * 60 * 60 * 1000,
+            timestamp: Math.floor((Date.now() - 7 * 60 * 60 * 1000) / 1000),
             sailData: [
               {
                 windAngle: 125,
@@ -208,13 +215,15 @@ export const shipDataService = {
       // Generate path points from time series data with validation
       // Since we don't have location data in the new API format, we'll use default values
       const defaultPath = [
-        [52.3708, 4.8958], // Amsterdam
-        [52.4, 4.9],
-        [52.42, 4.92],
-        [52.44, 4.94],
-        [52.46, 4.96],
-        [52.48, 4.98],
-        [52.5, 5.0],
+        [52.3702, 4.8952],
+        [52.422, 4.58],
+        [52.4632, 4.5552],
+        [52.5, 4.2],
+        [52.45, 3.9],
+        [52.2, 3.7],
+        [51.99, 3.8],
+        [51.9581, 4.0494],
+        [51.9225, 4.4792],
       ];
 
       // Transform time series data
@@ -230,7 +239,7 @@ export const shipDataService = {
           wind_speed: sailData.windSpeed || 0,
           fan_speed: sailData.fanSpeed || 0,
           windAngle: sailData.windAngle || 0,
-          location: { latitude: 52.3708, longitude: 4.8958 }, // Default location
+          location: { latitude: 52.371, longitude: 4.7 }, // Amsterdam (near shore)
           rudderAngle: 0,
           sog: 0,
           cog: 0,
@@ -257,7 +266,7 @@ export const shipDataService = {
         },
         timeSeriesData,
         path: defaultPath,
-        position: { latitude: 52.3708, longitude: 4.8958 }, // Default position
+        position: { latitude: 52.371, longitude: 4.895 }, // Amsterdam (near shore)
         type: "Container Ship", // Default type
         status: "En Route", // Default status
         destination: "Rotterdam", // Default destination
@@ -410,8 +419,8 @@ export const shipDataService = {
   startRealtimeUpdates: (imo, callback, interval = 30000) => {
     const updateInterval = setInterval(async () => {
       try {
-        const endTime = new Date();
-        const startTime = new Date(endTime - 5 * 60 * 1000); // Last 5 minutes
+        const endTime = Math.floor(Date.now() / 1000); // Current time in seconds
+        const startTime = endTime - 5 * 60; // Last 5 minutes in seconds
         const data = await shipDataService.getShipStatistics(
           imo,
           startTime,
