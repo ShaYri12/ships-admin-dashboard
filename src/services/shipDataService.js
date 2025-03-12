@@ -31,14 +31,103 @@ export const shipDataService = {
         return response.data;
       }
 
-      // If using mock data, return mock data
+      // If using mock data, return mock data based on the new API format
       return {
         imo,
         name: "Mock Ship",
-        statistics_average: { wind_speed: 15, fan_speed: 3 },
-        statistics_max: { wind_speed: 20, fan_speed: 4 },
-        statistics_min: { wind_speed: 10, fan_speed: 2 },
-        statistics_per_time: [],
+        results_meta: {
+          data_points_collected: 8,
+        },
+        results_aggregated: {
+          aggregation_min: {
+            wind_speed: 20,
+            fan_speed: 0,
+          },
+          aggregation_max: {
+            wind_speed: 67,
+            fan_speed: 0,
+          },
+          aggregation_avg: {
+            wind_speed: 71.25,
+            fan_speed: 0,
+          },
+        },
+        results_timed: [
+          {
+            uuid: "e3c34f74-571f-48ff-a2ca-26765b164bd0",
+            timestamp: Date.now() - 8 * 60 * 60 * 1000,
+            sailData: [
+              {
+                windAngle: 125,
+                windSpeed: 20,
+                windRotationAngle: null,
+                wingUp: false,
+                wingDown: null,
+                fanSpeed: 0,
+                autoModeOn: null,
+                forwardForce: null,
+                sidewayForce: null,
+                hpRunning: false,
+                alarmPresent: false,
+                autoSailingActive: false,
+                reserve: 0,
+              },
+              {
+                windAngle: 133,
+                windSpeed: 59,
+                windRotationAngle: null,
+                wingUp: false,
+                wingDown: null,
+                fanSpeed: 0,
+                autoModeOn: null,
+                forwardForce: null,
+                sidewayForce: null,
+                hpRunning: false,
+                alarmPresent: false,
+                autoSailingActive: false,
+                reserve: 0,
+              },
+            ],
+            shipData: {},
+          },
+          {
+            uuid: "18a81973-6019-4961-b692-f30f10a4a130",
+            timestamp: Date.now() - 7 * 60 * 60 * 1000,
+            sailData: [
+              {
+                windAngle: 125,
+                windSpeed: 36,
+                windRotationAngle: null,
+                wingUp: false,
+                wingDown: null,
+                fanSpeed: 0,
+                autoModeOn: null,
+                forwardForce: null,
+                sidewayForce: null,
+                hpRunning: false,
+                alarmPresent: false,
+                autoSailingActive: false,
+                reserve: 0,
+              },
+              {
+                windAngle: 133,
+                windSpeed: 58,
+                windRotationAngle: null,
+                wingUp: false,
+                wingDown: null,
+                fanSpeed: 0,
+                autoModeOn: null,
+                forwardForce: null,
+                sidewayForce: null,
+                hpRunning: false,
+                alarmPresent: false,
+                autoSailingActive: false,
+                reserve: 0,
+              },
+            ],
+            shipData: {},
+          },
+        ],
       };
     } catch (error) {
       console.error("Failed to fetch ship statistics:", error);
@@ -102,10 +191,8 @@ export const shipDataService = {
       const {
         imo,
         name,
-        statistics_average = {},
-        statistics_max = {},
-        statistics_min = {},
-        statistics_per_time = [],
+        results_aggregated = {},
+        results_timed = [],
       } = apiData;
 
       // Validate required fields
@@ -113,17 +200,44 @@ export const shipDataService = {
         throw new Error("Missing required fields in API data");
       }
 
+      // Extract aggregated statistics
+      const statistics_min = results_aggregated.aggregation_min || {};
+      const statistics_max = results_aggregated.aggregation_max || {};
+      const statistics_avg = results_aggregated.aggregation_avg || {};
+
       // Generate path points from time series data with validation
-      const path = statistics_per_time
-        .filter(
-          (point) =>
-            point?.shipData?.location?.latitude &&
-            point?.shipData?.location?.longitude
-        )
-        .map((point) => [
-          point.shipData.location.latitude,
-          point.shipData.location.longitude,
-        ]);
+      // Since we don't have location data in the new API format, we'll use default values
+      const defaultPath = [
+        [52.3708, 4.8958], // Amsterdam
+        [52.4, 4.9],
+        [52.42, 4.92],
+        [52.44, 4.94],
+        [52.46, 4.96],
+        [52.48, 4.98],
+        [52.5, 5.0],
+      ];
+
+      // Transform time series data
+      const timeSeriesData = results_timed.map((point) => {
+        // Get the first sail data if available
+        const sailData =
+          point.sailData && point.sailData.length > 0
+            ? point.sailData[0]
+            : { windSpeed: 0, windAngle: 0, fanSpeed: 0 };
+
+        return {
+          timestamp: point.timestamp * 1000, // Convert to milliseconds
+          wind_speed: sailData.windSpeed || 0,
+          fan_speed: sailData.fanSpeed || 0,
+          windAngle: sailData.windAngle || 0,
+          location: { latitude: 52.3708, longitude: 4.8958 }, // Default location
+          rudderAngle: 0,
+          sog: 0,
+          cog: 0,
+          hdg: 0,
+          windDirection: sailData.windAngle || 0,
+        };
+      });
 
       return {
         id: imo,
@@ -131,34 +245,106 @@ export const shipDataService = {
         imo,
         statistics: {
           wind_speed: {
-            avg: statistics_average.wind_speed || 0,
+            avg: statistics_avg.wind_speed || 0,
             max: statistics_max.wind_speed || 0,
             min: statistics_min.wind_speed || 0,
           },
           fan_speed: {
-            avg: statistics_average.fan_speed || 0,
+            avg: statistics_avg.fan_speed || 0,
             max: statistics_max.fan_speed || 0,
             min: statistics_min.fan_speed || 0,
           },
         },
-        timeSeriesData: statistics_per_time.map((point) => ({
-          timestamp: new Date(point.timestamp || Date.now()).getTime(),
-          wind_speed: point.wind_speed || 0,
-          fan_speed: point.fan_speed || 0,
-          location: point.shipData?.location || { latitude: 0, longitude: 0 },
-          rudderAngle: point.shipData?.rudderAngle || 0,
-          sog: point.shipData?.sog || 0,
-          cog: point.shipData?.cog || 0,
-          hdg: point.shipData?.hdg || 0,
-          windDirection: point.shipData?.windDirection || 0,
-        })),
-        path,
-        position: path[path.length - 1]
-          ? {
-              latitude: path[path.length - 1][0],
-              longitude: path[path.length - 1][1],
-            }
-          : { latitude: 0, longitude: 0 },
+        timeSeriesData,
+        path: defaultPath,
+        position: { latitude: 52.3708, longitude: 4.8958 }, // Default position
+        type: "Container Ship", // Default type
+        status: "En Route", // Default status
+        destination: "Rotterdam", // Default destination
+        eta: new Date(Date.now() + 24 * 60 * 60 * 1000)
+          .toISOString()
+          .split("T")[0], // Tomorrow
+        color: "#6366f1", // Default color
+        performanceData: {
+          labels: timeSeriesData.map((point) =>
+            new Date(point.timestamp).toLocaleTimeString()
+          ),
+          datasets: [
+            {
+              label: "Wind Speed (knots)",
+              data: timeSeriesData.map((point) => point.wind_speed),
+              borderColor: "#6366f1",
+              backgroundColor: "rgba(99, 102, 241, 0.1)",
+              tension: 0.4,
+            },
+            {
+              label: "Fan Speed",
+              data: timeSeriesData.map((point) => point.fan_speed),
+              borderColor: "#8B5CF6",
+              backgroundColor: "rgba(139, 92, 246, 0.1)",
+              tension: 0.4,
+            },
+          ],
+        },
+        cargoData: {
+          labels: ["Container", "Bulk", "Vehicle", "Other"],
+          datasets: [
+            {
+              data: [450, 150, 200, 100],
+              backgroundColor: [
+                "rgba(99, 102, 241, 0.8)",
+                "rgba(139, 92, 246, 0.8)",
+                "rgba(236, 72, 153, 0.8)",
+                "rgba(16, 185, 129, 0.8)",
+              ],
+            },
+          ],
+        },
+        maintenanceData: {
+          labels: [
+            "Engine",
+            "Hull",
+            "Electronics",
+            "Safety",
+            "Navigation",
+            "Other",
+          ],
+          datasets: [
+            {
+              label: "Maintenance Hours",
+              data: [24, 12, 8, 16, 10, 6],
+              backgroundColor: "rgba(99, 102, 241, 0.8)",
+            },
+          ],
+        },
+        windSpeedData: {
+          labels: timeSeriesData.map((point) =>
+            new Date(point.timestamp).toLocaleTimeString()
+          ),
+          datasets: [
+            {
+              label: "Wind Speed",
+              data: timeSeriesData.map((point) => point.wind_speed),
+              borderColor: "#6366f1",
+              backgroundColor: "rgba(99, 102, 241, 0.1)",
+              tension: 0.4,
+            },
+          ],
+        },
+        wingRotationData: {
+          labels: timeSeriesData.map((point) =>
+            new Date(point.timestamp).toLocaleTimeString()
+          ),
+          datasets: [
+            {
+              label: "Wind Angle",
+              data: timeSeriesData.map((point) => point.windAngle || 0),
+              borderColor: "#6366f1",
+              backgroundColor: "rgb(99, 102, 241)",
+              barThickness: 8,
+            },
+          ],
+        },
       };
     } catch (error) {
       console.error("Error transforming ship data:", error);
@@ -187,15 +373,23 @@ export const shipDataService = {
       data: [
         {
           uuid: crypto.randomUUID(),
-          timestamp: Date.now(),
+          timestamp: Math.floor(Date.now() / 1000), // Convert to seconds for API
           sailData: [
             {
               sailId: "1",
               windSpeed,
               fanSpeed,
-              wingRotationAngle,
-              windAngle: course,
-              autoModeOn: true,
+              windRotationAngle: wingRotationAngle,
+              windAngle: windDirection || course,
+              wingUp: false,
+              wingDown: false,
+              autoModeOn: false,
+              forwardForce: null,
+              sidewayForce: null,
+              hpRunning: false,
+              alarmPresent: false,
+              autoSailingActive: false,
+              reserve: 0,
             },
           ],
           shipData: {
@@ -203,11 +397,9 @@ export const shipDataService = {
               latitude: position.latitude,
               longitude: position.longitude,
             },
-            windSpeed,
-            windDirection,
+            cog: course,
             sog: speed,
             rudderAngle,
-            cog: course,
           },
         },
       ],
