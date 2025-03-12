@@ -9,11 +9,8 @@ const MockModeToggle = () => {
     if (isMockMode) {
       // Show VPN warning when switching to live mode
       const confirmed = window.confirm(
-        "Live mode requires an active Netherlands VPN connection.\n\n" +
-          "Please ensure you:\n" +
-          "1. Have a VPN client installed\n" +
-          "2. Are connected to a Netherlands server\n" +
-          "\nDo you want to continue?"
+        "Are you sure you want to switch to -> Live Mode\n\n" +
+          "The dutch vpn is only for you or people who work in different countries on this project.\n"
       );
       if (!confirmed) return;
     }
