@@ -7,6 +7,7 @@ import { MockModeProvider } from "./context/MockModeContext";
 
 import DashboardPage from "./pages/DashboardPage";
 import ShipsPage from "./pages/ShipsPage";
+import ShipCreationPage from "./pages/ShipCreationPage";
 import UsersPage from "./pages/UsersPage";
 import WeatherPage from "./pages/WeatherPage";
 import SettingsPage from "./pages/SettingsPage";
@@ -98,6 +99,14 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <ShipsPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/ships/create"
+                element={
+                  <ProtectedRoute>
+                    <ShipCreationPage />
                   </ProtectedRoute>
                 }
               />

@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Chart as ChartJS } from "chart.js/auto";
 import { shipService } from "../services/shipService";
 import { useMockMode } from "../context/MockModeContext";
 import MockModeToggle from "../components/shared/MockModeToggle";

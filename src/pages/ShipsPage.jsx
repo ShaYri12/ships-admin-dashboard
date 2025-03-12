@@ -21,6 +21,7 @@ import ShipMap from "../components/ships/ShipMap";
 import ShipSelector from "../components/ships/ShipSelector";
 import RoutePointGraphs from "../components/ships/RoutePointGraphs";
 import PerformanceCharts from "../components/ships/PerformanceCharts";
+import { useNavigate } from "react-router-dom";
 
 // Register ChartJS components
 ChartJS.register(
@@ -42,6 +43,7 @@ const ShipsPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [currentTimeIndex, setCurrentTimeIndex] = useState(0);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchShips = async () => {
@@ -82,6 +84,11 @@ const ShipsPage = () => {
     setCurrentTimeIndex(index);
   };
 
+  // Navigate to ship creation page
+  const handleAddShip = () => {
+    navigate("/ships/create");
+  };
+
   if (loading) {
     return (
       <div className="p-8">
@@ -120,11 +127,19 @@ const ShipsPage = () => {
       <div className="max-w-7xl mx-auto">
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-3xl font-bold">Ships Management</h1>
-          <ShipSelector
-            ships={ships}
-            selectedShip={selectedShip}
-            onShipChange={handleShipChange}
-          />
+          <div className="flex items-center space-x-4">
+            <ShipSelector
+              ships={ships}
+              selectedShip={selectedShip}
+              onShipChange={handleShipChange}
+            />
+            <button
+              onClick={handleAddShip}
+              className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            >
+              Add New Ship
+            </button>
+          </div>
         </div>
 
         {/* Ship Details */}

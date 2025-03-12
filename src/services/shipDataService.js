@@ -1,12 +1,6 @@
 import { api } from "./api";
 import { locationService } from "./locationService";
 
-// Update the API_BASE_URL to use a proxy in development mode
-const API_BASE_URL =
-  process.env.NODE_ENV === "development"
-    ? "/api" // This will be proxied in vite.config.js
-    : "https://qt6hfks5dj.execute-api.eu-central-1.amazonaws.com/development";
-
 // Development flag - set to true to use mock data
 const DEV_MODE = process.env.NODE_ENV === "development";
 
@@ -23,15 +17,12 @@ export const shipDataService = {
         // Verify Netherlands VPN connection
         await locationService.getNetherlands();
 
-        const response = await api.get(
-          `${API_BASE_URL}/data/ships/${imo}/statistics`,
-          {
-            params: {
-              start_time: new Date(startTime).getTime(),
-              end_time: new Date(endTime).getTime(),
-            },
-          }
-        );
+        const response = await api.get(`/data/ships/${imo}/statistics`, {
+          params: {
+            start_time: new Date(startTime).getTime(),
+            end_time: new Date(endTime).getTime(),
+          },
+        });
 
         if (!response.data) {
           throw new Error("No data received from API");
@@ -68,15 +59,35 @@ export const shipDataService = {
         await locationService.getNetherlands();
       }
 
-      const processedData = this.processShipRecord(shipData);
-      const response = await api.post(
-        `${API_BASE_URL}/data/ships`,
-        processedData
-      );
+      // If in mock mode, return a successful response
+      if (useMockData) {
+        console.log("Using mock mode for ship submission");
+        return {
+          success: true,
+          message: "Ship data submitted successfully (mock)",
+          data: shipData,
+        };
+      }
+
+      const processedData = shipDataService.processShipRecord(shipData);
+
+      // For debugging
+      console.log("Submitting ship data to API");
+      console.log("Processed data:", processedData);
+
+      const response = await api.post(`/data/ships`, processedData);
 
       return response.data;
     } catch (error) {
       console.error("Failed to submit ship data:", error);
+
+      // For debugging - log more details about the error
+      if (error.response) {
+        console.error("Error response data:", error.response.data);
+        console.error("Error response status:", error.response.status);
+        console.error("Error response headers:", error.response.headers);
+      }
+
       throw error;
     }
   },
