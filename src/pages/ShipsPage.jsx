@@ -125,9 +125,9 @@ const ShipsPage = () => {
   return (
     <div className="p-8">
       <div className="max-w-7xl mx-auto">
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex md:flex-row flex-col md:items-center justify-between mb-8 gap-6">
           <h1 className="text-3xl font-bold">Ships Management</h1>
-          <div className="flex items-center space-x-4">
+          <div className="flex flex-wrap items-center justify-end gap-4">
             <ShipSelector
               ships={ships}
               selectedShip={selectedShip}
