@@ -56,7 +56,46 @@ const barOptions = {
   },
 };
 
+// Default chart data to use when properties are missing
+const defaultChartData = {
+  labels: ["No Data Available"],
+  datasets: [
+    {
+      label: "No Data",
+      data: [0],
+      backgroundColor: "rgba(99, 102, 241, 0.2)",
+      borderColor: "rgba(99, 102, 241, 1)",
+    },
+  ],
+};
+
+// Default doughnut data
+const defaultDoughnutData = {
+  labels: ["No Data Available"],
+  datasets: [
+    {
+      data: [100],
+      backgroundColor: ["rgba(99, 102, 241, 0.2)"],
+      borderColor: ["rgba(99, 102, 241, 1)"],
+    },
+  ],
+};
+
 const PerformanceCharts = ({ ship }) => {
+  // Ensure ship data exists
+  if (!ship) {
+    return <div>No ship data available</div>;
+  }
+
+  // Get chart data with fallbacks
+  const wingRotationData = ship.wingRotationData || defaultChartData;
+  const windSpeedData = ship.windSpeedData || defaultChartData;
+  const performanceData = ship.performanceData || defaultChartData;
+
+  // These properties might not exist in the API response, so provide defaults
+  const cargoData = ship.cargoData || defaultDoughnutData;
+  const maintenanceData = ship.maintenanceData || defaultChartData;
+
   return (
     <>
       {/* Wing Rotation Analysis */}
@@ -67,7 +106,7 @@ const PerformanceCharts = ({ ship }) => {
             Wing Rotation Angle Distribution
           </h3>
           <div className="h-[300px]">
-            <Bar data={ship.wingRotationData} options={barOptions} />
+            <Bar data={wingRotationData} options={barOptions} />
           </div>
         </div>
 
@@ -75,7 +114,7 @@ const PerformanceCharts = ({ ship }) => {
         <div className="bg-gray-800 bg-opacity-50 backdrop-blur-md overflow-hidden shadow-lg rounded-xl border border-gray-700 p-6">
           <h3 className="text-lg font-semibold mb-4">Wind Speed Over Time</h3>
           <div className="h-[300px]">
-            <Line data={ship.windSpeedData} options={chartOptions} />
+            <Line data={windSpeedData} options={chartOptions} />
           </div>
         </div>
       </div>
@@ -86,7 +125,7 @@ const PerformanceCharts = ({ ship }) => {
         <div className="bg-gray-800 bg-opacity-50 backdrop-blur-md overflow-hidden shadow-lg rounded-xl border border-gray-700 p-6">
           <h3 className="text-lg font-semibold mb-4">Performance Metrics</h3>
           <div className="h-[300px]">
-            <Line data={ship.performanceData} options={chartOptions} />
+            <Line data={performanceData} options={chartOptions} />
           </div>
         </div>
 
@@ -94,7 +133,7 @@ const PerformanceCharts = ({ ship }) => {
         <div className="bg-gray-800 bg-opacity-50 backdrop-blur-md overflow-hidden shadow-lg rounded-xl border border-gray-700 p-6">
           <h3 className="text-lg font-semibold mb-4">Cargo Distribution</h3>
           <div className="h-[300px]">
-            <Doughnut data={ship.cargoData} options={doughnutOptions} />
+            <Doughnut data={cargoData} options={doughnutOptions} />
           </div>
         </div>
       </div>
@@ -105,7 +144,7 @@ const PerformanceCharts = ({ ship }) => {
           Maintenance Hours by Department
         </h3>
         <div className="h-[300px]">
-          <Bar data={ship.maintenanceData} options={chartOptions} />
+          <Bar data={maintenanceData} options={chartOptions} />
         </div>
       </div>
     </>

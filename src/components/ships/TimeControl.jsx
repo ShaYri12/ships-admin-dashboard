@@ -12,7 +12,7 @@ const TimeControl = ({ ship, currentTimeIndex, onTimeChange }) => {
         <span className="text-sm text-white">
           {ship?.timeSeriesData?.[currentTimeIndex]
             ? new Date(
-                ship.timeSeriesData[currentTimeIndex].timestamp
+                ship.timeSeriesData[currentTimeIndex].timestamp * 1000
               ).toLocaleString()
             : "No data"}
         </span>

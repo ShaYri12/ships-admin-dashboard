@@ -9,10 +9,34 @@ import {
 import "leaflet/dist/leaflet.css";
 import { createShipIcon, createPinIcon, iconStyle } from "./MapIcons";
 
-const DashboardMap = ({ ships, selectedShip, onShipSelect, mapRef }) => {
+const DashboardMap = ({
+  ships,
+  selectedShip,
+  onShipSelect,
+  mapRef,
+  startDate,
+  endDate,
+}) => {
+  // Format date for display
+  const formatDate = (date) => {
+    if (!date) return "";
+    return date.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+  };
+
   return (
     <div className="bg-gray-800 bg-opacity-50 backdrop-blur-md overflow-hidden shadow-lg rounded-xl border border-gray-700 p-4 mb-8">
-      <h2 className="text-xl font-semibold mb-4">Ship Locations & Routes</h2>
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-4">
+        <h2 className="text-xl font-semibold">Ship Locations & Routes</h2>
+        {startDate && endDate && (
+          <div className="text-sm text-gray-300 mt-1 md:mt-0">
+            Showing data from {formatDate(startDate)} to {formatDate(endDate)}
+          </div>
+        )}
+      </div>
       <div className="h-[400px] rounded-lg overflow-hidden">
         <style>{iconStyle}</style>
         <MapContainer
@@ -46,6 +70,7 @@ const DashboardMap = ({ ships, selectedShip, onShipSelect, mapRef }) => {
                   <Popup>
                     <div className="text-gray-900">
                       <h3 className="font-bold">{ship.name} - Start Point</h3>
+                      <p>IMO: {ship.imo}</p>
                       <p>
                         Position: {ship.path[0][0].toFixed(4)}°N,{" "}
                         {ship.path[0][1].toFixed(4)}°E
@@ -94,6 +119,7 @@ const DashboardMap = ({ ships, selectedShip, onShipSelect, mapRef }) => {
                   <Popup>
                     <div className="text-gray-900">
                       <h3 className="font-bold">{ship.name} - End Point</h3>
+                      <p>IMO: {ship.imo}</p>
                       <p>
                         Position:{" "}
                         {ship.path[ship.path.length - 1][0].toFixed(4)}°N,{" "}

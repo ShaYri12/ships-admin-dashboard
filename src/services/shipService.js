@@ -13,23 +13,78 @@ export const shipService = {
       }
 
       // In the real implementation, we would fetch all ships
-      // For now, we'll use a hardcoded IMO number since the API doesn't support fetching all ships
-      const imo = "9996903"; // Amadeus Saffier
-      const response = await shipDataService.getShipStatistics(
-        imo,
-        Math.floor(Date.now() / 1000) - 24 * 60 * 60, // last 24 hours in seconds
-        Math.floor(Date.now() / 1000) // current time in seconds
+      // Define the IMO numbers we want to fetch
+      const imoNumbers = [
+        "9996903", // Amadeus Saffier
+        "9512331", // NBA Magritte
+        "999690", // Amadeus
+      ];
+
+      // Use the specific timestamps instead of calculating from current time
+      const startTime = 1741281633; // Specific start timestamp
+      const endTime = 1741317363; // Specific end timestamp
+
+      console.log(
+        `Fetching live ship data from ${new Date(
+          startTime * 1000
+        ).toLocaleString()} to ${new Date(endTime * 1000).toLocaleString()}`
       );
 
-      if (!response) {
-        throw new Error("Invalid response format from API");
-      }
+      // Fetch data for all ships
+      const shipPromises = imoNumbers.map((imo) =>
+        shipDataService
+          .getShipStatistics(imo, startTime, endTime, false) // Use specific timestamps
+          .then((response) => {
+            if (!response) {
+              console.warn(`Invalid response format from API for IMO: ${imo}`);
+              return null;
+            }
 
-      // Transform the single ship data and return as an array
-      return [shipDataService.transformShipData(response)];
+            // Log the API response for debugging
+            console.log(`Received data for ship with IMO ${imo}:`, {
+              name: response.name,
+              dataPoints: response.results_meta?.data_points_collected || 0,
+              timePoints: response.results_timed?.length || 0,
+            });
+
+            return shipDataService.transformShipData(response);
+          })
+          .catch((error) => {
+            // Instead of propagating the error, log it and return null
+            // This allows other ships to still be processed
+            console.error(`Failed to fetch ship with IMO ${imo}:`, error);
+            return null;
+          })
+      );
+
+      try {
+        // Use Promise.allSettled instead of Promise.all to handle individual failures
+        const results = await Promise.allSettled(shipPromises);
+
+        // Extract successful results
+        const ships = results
+          .filter(
+            (result) => result.status === "fulfilled" && result.value !== null
+          )
+          .map((result) => result.value);
+
+        // Filter out any null responses
+        const validShips = ships.filter((ship) => ship !== null);
+
+        if (validShips.length === 0) {
+          throw new Error("No valid ship data received from API");
+        }
+
+        console.log(`Successfully fetched ${validShips.length} ships from API`);
+        return validShips;
+      } catch (error) {
+        // In live mode, we propagate the error instead of falling back to mock data
+        console.error("Failed to fetch ships:", error);
+        throw new Error(`Failed to fetch live data: ${error.message}`);
+      }
     } catch (error) {
       console.error("Failed to fetch ships:", error);
-      // Don't fall back to mock data, instead throw the error
+      // In live mode, we propagate the error instead of falling back to mock data
       throw error;
     }
   },
@@ -72,16 +127,26 @@ export const shipService = {
           ? endTime
           : Math.floor(new Date(endTime).getTime() / 1000);
 
+      // For live mode, use the provided timestamps
       const response = await shipDataService.getShipStatistics(
         imo,
         startTimestamp,
-        endTimestamp
+        endTimestamp,
+        false // Explicitly set useMockData to false
       );
 
       return shipDataService.transformShipData(response);
     } catch (error) {
       console.error("Failed to fetch ship statistics:", error);
-      // Fallback to mock data if API call fails
+
+      // In live mode, don't fall back to mock data, instead throw the error
+      if (!useMockData) {
+        throw new Error(
+          `Failed to fetch live data for ship with IMO ${imo}: ${error.message}`
+        );
+      }
+
+      // Only in mock mode, fall back to mock data
       const mockShip = MOCK_SHIPS.find((ship) => ship.imo === imo);
       return mockShip || null;
     }

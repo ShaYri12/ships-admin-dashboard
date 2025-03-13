@@ -17,9 +17,15 @@ const ShipOverview = ({ ships }) => {
           <div className="px-4 py-5 sm:p-6">
             <div className="flex items-center mb-4">
               <Ship className="w-6 h-6 mr-3" style={{ color: ship.color }} />
-              <h3 className="text-lg font-semibold">{ship.name}</h3>
+              <div>
+                <h3 className="text-lg font-semibold">{ship.name}</h3>
+                <p className="text-xs text-gray-400">IMO: {ship.imo}</p>
+              </div>
             </div>
             <div className="space-y-2">
+              <p className="text-gray-400">
+                Type: <span className="text-white">{ship.type}</span>
+              </p>
               <p className="text-gray-400">
                 Status: <span className="text-white">{ship.status}</span>
               </p>

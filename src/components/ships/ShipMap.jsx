@@ -113,15 +113,17 @@ const ShipMap = ({ ship, currentTimeIndex, onTimeChange }) => {
                   Position: {ship.position.latitude.toFixed(4)}°N,{" "}
                   {ship.position.longitude.toFixed(4)}°E
                 </p>
-                <p>Wind Speed: {ship.statistics.wind_speed.avg} knots</p>
-                <p className="text-xs text-gray-600">
-                  (min: {ship.statistics.wind_speed.min}, max:{" "}
-                  {ship.statistics.wind_speed.max})
+                <p>
+                  Wind Speed: {ship.statistics?.wind_speed?.avg || "N/A"} knots
                 </p>
-                <p>Fan Speed: {ship.statistics.fan_speed.avg}</p>
                 <p className="text-xs text-gray-600">
-                  (min: {ship.statistics.fan_speed.min}, max:{" "}
-                  {ship.statistics.fan_speed.max})
+                  (min: {ship.statistics?.wind_speed?.min || "N/A"}, max:{" "}
+                  {ship.statistics?.wind_speed?.max || "N/A"})
+                </p>
+                <p>Fan Speed: {ship.statistics?.fan_speed?.avg || "N/A"}</p>
+                <p className="text-xs text-gray-600">
+                  (min: {ship.statistics?.fan_speed?.min || "N/A"}, max:{" "}
+                  {ship.statistics?.fan_speed?.max || "N/A"})
                 </p>
                 <p>Destination: {ship.destination}</p>
                 <p>ETA: {ship.eta}</p>
