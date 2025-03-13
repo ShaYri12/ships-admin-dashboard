@@ -80,10 +80,18 @@ const ShipsPage = () => {
             wind_speed: { avg: 0, min: 0, max: 0 },
             fan_speed: { avg: 0, min: 0, max: 0 },
           },
+          // Add a hasData flag if not already set
+          hasData:
+            ship.hasData !== undefined
+              ? ship.hasData
+              : ship.timeSeriesData && ship.timeSeriesData.length > 0,
         }));
 
         setShips(validatedShips);
-        setSelectedShip(validatedShips[0]);
+
+        // Select the first ship that has data, if available
+        const shipWithData = validatedShips.find((ship) => ship.hasData);
+        setSelectedShip(shipWithData || validatedShips[0]);
 
         // Keep the predefined date range instead of setting it based on ship data
         // Only set the date range if startDate or endDate is null
@@ -106,12 +114,55 @@ const ShipsPage = () => {
     fetchShips();
   }, [isMockMode]);
 
+  // Function to handle ship selection
+  const handleShipChange = (e) => {
+    const selectedValue = e.target.value;
+
+    // Handle empty selection
+    if (!selectedValue) {
+      setSelectedShip(null);
+      setError(null);
+      return;
+    }
+
+    // Find ship by comparing strings to handle both number and string IDs
+    const newSelectedShip = ships.find(
+      (s) => String(s.id) === String(selectedValue)
+    );
+
+    // Handle case where ship is not found
+    if (!newSelectedShip) {
+      setSelectedShip(null);
+      setError("Selected ship not found");
+      return;
+    }
+
+    setSelectedShip(newSelectedShip);
+
+    // Clear any existing error
+    setError(null);
+
+    // If the ship has no data, show a message
+    if (!newSelectedShip.hasData) {
+      setError(
+        `No data available for ${newSelectedShip.name} (IMO: ${newSelectedShip.imo}). Please try another ship or date range.`
+      );
+      return;
+    }
+
+    // If we have a date range and we're not in mock mode, fetch new data
+    if (startDate && endDate && !isMockMode) {
+      fetchShipData(newSelectedShip.imo, startDate, endDate);
+    }
+  };
+
   // Function to fetch data for a specific ship with date range
   const fetchShipData = async (imo, start, end) => {
     if (isMockMode) return; // Don't fetch new data in mock mode
 
     try {
       setLoading(true);
+      setError(null);
 
       // Convert dates to timestamps (seconds)
       const startTimestamp = Math.floor(start.getTime() / 1000);
@@ -130,20 +181,16 @@ const ShipsPage = () => {
       );
 
       if (!shipData) {
-        // Instead of throwing an error, just show a warning and keep the current ship data
         console.warn(
           `No data available for IMO ${imo} in the selected date range`
         );
-        setError(
-          `No data available for IMO ${imo} in the selected date range. Showing existing data.`
-        );
-        setTimeout(() => setError(null), 5000); // Clear error after 5 seconds
         return;
       }
 
       // Update the selected ship with the new data
       const updatedShip = {
         ...shipData,
+        hasData: true, // Explicitly mark as having data
         timeSeriesData: (shipData.timeSeriesData || []).map((point) => ({
           ...point,
           timestamp:
@@ -156,28 +203,17 @@ const ShipsPage = () => {
       };
 
       // Update the ships array and selected ship
-      setShips(ships.map((ship) => (ship.imo === imo ? updatedShip : ship)));
+      setShips((prevShips) =>
+        prevShips.map((ship) => (ship.imo === imo ? updatedShip : ship))
+      );
       setSelectedShip(updatedShip);
     } catch (err) {
-      // Show error but don't break the application
       console.error(`Error fetching data for IMO ${imo}:`, err);
       setError(
-        `Failed to fetch ship data for IMO ${imo} in the selected date range: ${err.message}. Showing existing data.`
+        `Failed to fetch ship data for IMO ${imo} in the selected date range: ${err.message}. Please try again.`
       );
-      setTimeout(() => setError(null), 5000); // Clear error after 5 seconds
     } finally {
       setLoading(false);
-    }
-  };
-
-  // Function to handle ship selection
-  const handleShipChange = (e) => {
-    const newSelectedShip = ships.find((s) => s.id === Number(e.target.value));
-    setSelectedShip(newSelectedShip);
-
-    // If we have a date range, fetch data for the new ship
-    if (startDate && endDate && !isMockMode) {
-      fetchShipData(newSelectedShip.imo, startDate, endDate);
     }
   };
 
@@ -245,42 +281,6 @@ const ShipsPage = () => {
     );
   }
 
-  if (error) {
-    return (
-      <div className="p-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="bg-red-100 border border-red-400 text-red-700 p-4 rounded-md mb-4">
-            <h2 className="text-xl font-bold mb-2">Error</h2>
-            <p>{error}</p>
-            {!isMockMode && (
-              <div className="mt-4">
-                <p className="font-semibold">Suggestions:</p>
-                <ul className="list-disc pl-5 mt-2">
-                  <li>Check your API connection</li>
-                  <li>Verify the API endpoint is correct</li>
-                  <li>Ensure you have the correct IMO numbers configured</li>
-                  <li>Try switching to Mock Mode to see sample data</li>
-                </ul>
-              </div>
-            )}
-          </div>
-        </div>
-        <MockModeToggle />
-      </div>
-    );
-  }
-
-  if (!selectedShip) {
-    return (
-      <div className="p-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center">No ships available</div>
-        </div>
-        <MockModeToggle />
-      </div>
-    );
-  }
-
   // Format current time for display
   const currentTimeDisplay = selectedShip?.timeSeriesData?.[currentTimeIndex]
     ? new Date(
@@ -291,6 +291,7 @@ const ShipsPage = () => {
   return (
     <div className="p-8">
       <div className="max-w-7xl mx-auto">
+        {/* Header area - always visible */}
         <div className="flex md:flex-row flex-col md:items-center justify-between mb-6 gap-6">
           <h1 className="text-3xl font-bold">Ships Management</h1>
           <div className="flex flex-wrap items-center justify-end gap-4">
@@ -308,48 +309,101 @@ const ShipsPage = () => {
           </div>
         </div>
 
-        {/* Date Range Picker */}
-        <div className="flex flex-col md:flex-row items-start md:items-center gap-4 mb-6 bg-gray-800 bg-opacity-50 backdrop-blur-md p-4 rounded-xl border border-gray-700 relative z-10">
-          <div className="flex flex-col md:flex-row items-center gap-2 w-full">
-            <span className="text-sm text-white whitespace-nowrap">
-              Date Range:
-            </span>
-            <DatePicker
-              selected={startDate}
-              onChange={handleDateRangeChange}
-              startDate={startDate}
-              endDate={endDate}
-              selectsRange
-              className="bg-gray-700 text-white text-sm rounded-md px-2 py-1 w-full md:w-auto"
-              placeholderText="Select date range"
-              dateFormat="MMM d, yyyy"
-              disabled={!selectedShip?.timeSeriesData?.length}
-            />
+        {!selectedShip && (
+          <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 p-4 rounded-md mb-6">
+            <h2 className="text-xl font-bold mb-2">No Ship Selected</h2>
+            <p>Please select a ship from the dropdown menu above.</p>
           </div>
-          <div className="text-sm text-white whitespace-nowrap">
-            Current Time: {currentTimeDisplay}
-          </div>
-        </div>
+        )}
 
-        {/* Ship Details */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 relative z-2">
-          <ShipDetails ship={selectedShip} />
-          <NavigationInfo ship={selectedShip} />
-          <ShipStatistics ship={selectedShip} />
-        </div>
+        {selectedShip && (
+          <>
+            {/* Global error message */}
+            {error && (
+              <div className="bg-red-100 border border-red-400 text-red-700 p-4 rounded-md mb-6">
+                <h2 className="text-xl font-bold mb-2">Error</h2>
+                <p>{error}</p>
+                {!isMockMode && (
+                  <div className="mt-4">
+                    <p className="font-semibold">Suggestions:</p>
+                    <ul className="list-disc pl-5 mt-2">
+                      <li>Check your API connection</li>
+                      <li>Verify the API endpoint is correct</li>
+                      <li>
+                        Ensure you have the correct IMO numbers configured
+                      </li>
+                      <li>Try switching to Mock Mode to see sample data</li>
+                    </ul>
+                  </div>
+                )}
+              </div>
+            )}
 
-        {/* Ship Map */}
-        <ShipMap
-          ship={selectedShip}
-          currentTimeIndex={currentTimeIndex}
-          onTimeChange={handleTimeSliderChange}
-        />
+            {/* Show simple message for ships without data */}
+            {!selectedShip.hasData && !error && (
+              <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 p-4 rounded-md mb-6">
+                <h2 className="text-xl font-bold mb-2">No Ship Data Found</h2>
+                <p>
+                  No data available for {selectedShip.name} (IMO:{" "}
+                  {selectedShip.imo}
+                  ).
+                </p>
+                <p className="mt-2">
+                  Please select another ship from the dropdown or try a
+                  different date range.
+                </p>
+              </div>
+            )}
 
-        {/* Route Point Data Graphs */}
-        <RoutePointGraphs ship={selectedShip} />
+            {/* Only show the rest of the UI if the ship has data and there's no error */}
+            {selectedShip.hasData && !error && (
+              <>
+                {/* Date Range Picker */}
+                <div className="flex flex-col md:flex-row items-start md:items-center gap-4 mb-6 bg-gray-800 bg-opacity-50 backdrop-blur-md p-4 rounded-xl border border-gray-700 relative z-10">
+                  <div className="flex flex-col md:flex-row items-center gap-2 w-full">
+                    <span className="text-sm text-white whitespace-nowrap">
+                      Date Range:
+                    </span>
+                    <DatePicker
+                      selected={startDate}
+                      onChange={handleDateRangeChange}
+                      startDate={startDate}
+                      endDate={endDate}
+                      selectsRange
+                      className="bg-gray-700 text-white text-sm rounded-md px-2 py-1 w-full md:w-auto"
+                      placeholderText="Select date range"
+                      dateFormat="MMM d, yyyy"
+                      disabled={!selectedShip?.timeSeriesData?.length}
+                    />
+                  </div>
+                  <div className="text-sm text-white whitespace-nowrap">
+                    Current Time: {currentTimeDisplay}
+                  </div>
+                </div>
 
-        {/* Performance Charts */}
-        <PerformanceCharts ship={selectedShip} />
+                {/* Ship Details */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 relative z-2">
+                  <ShipDetails ship={selectedShip} />
+                  <NavigationInfo ship={selectedShip} />
+                  <ShipStatistics ship={selectedShip} />
+                </div>
+
+                {/* Ship Map */}
+                <ShipMap
+                  ship={selectedShip}
+                  currentTimeIndex={currentTimeIndex}
+                  onTimeChange={handleTimeSliderChange}
+                />
+
+                {/* Route Point Data Graphs */}
+                <RoutePointGraphs ship={selectedShip} />
+
+                {/* Performance Charts */}
+                <PerformanceCharts ship={selectedShip} />
+              </>
+            )}
+          </>
+        )}
       </div>
       <MockModeToggle />
     </div>

@@ -72,9 +72,25 @@ const ShipMap = ({ ship, currentTimeIndex, onTimeChange }) => {
     }
   `;
 
+  // Check if ship has data
+  const hasData = ship.timeSeriesData && ship.timeSeriesData.length > 0;
+  const hasPath = ship.path && ship.path.length > 0;
+
   return (
     <div className="bg-gray-800 bg-opacity-50 backdrop-blur-md overflow-hidden shadow-lg rounded-xl border border-gray-700 p-4 mb-8">
       <h2 className="text-xl font-semibold mb-4">Ship Location & Route</h2>
+
+      {!hasData && (
+        <div className="bg-yellow-800 bg-opacity-50 text-yellow-200 p-4 rounded-md mb-4">
+          <p className="font-semibold">No data available for this ship</p>
+          <p className="text-sm mt-1">
+            This ship doesn't have any time series data. The map will show the
+            ship's position, but no route or time-based information is
+            available.
+          </p>
+        </div>
+      )}
+
       <div className="h-[400px] rounded-lg overflow-hidden">
         <style>{iconStyle}</style>
         <MapContainer
@@ -127,72 +143,79 @@ const ShipMap = ({ ship, currentTimeIndex, onTimeChange }) => {
                 </p>
                 <p>Destination: {ship.destination}</p>
                 <p>ETA: {ship.eta}</p>
+                {!hasData && (
+                  <p className="text-yellow-600 font-semibold mt-2">
+                    No time series data available
+                  </p>
+                )}
               </div>
             </Popup>
           </Marker>
 
           {/* Route Points with Time Data */}
-          {ship.path?.map(
-            (point, index) =>
-              point &&
-              point.length === 2 && (
-                <Marker
-                  key={`point-${index}`}
-                  position={point}
-                  icon={createPinIcon()}
-                  zIndexOffset={500}
-                  opacity={index === currentTimeIndex ? 1 : 0.5}
-                >
-                  <Popup>
-                    <div className="text-gray-900">
-                      <h3 className="font-bold">Route Point {index + 1}</h3>
-                      <p>{ship.name}</p>
-                      <p>
-                        Position: {point[0].toFixed(4)}°N, {point[1].toFixed(4)}
-                        °E
-                      </p>
-                      {ship.timeSeriesData?.[index] && (
-                        <>
-                          <p>
-                            Time:{" "}
-                            {new Date(
-                              ship.timeSeriesData[index].timestamp
-                            ).toLocaleString()}
-                          </p>
-                          <p>
-                            Wind Speed: {ship.timeSeriesData[index].wind_speed}{" "}
-                            knots
-                          </p>
-                          <p>
-                            Fan Speed: {ship.timeSeriesData[index].fan_speed}
-                          </p>
-                          <p>
-                            Wind Direction:{" "}
-                            {ship.timeSeriesData[index].windDirection}°
-                          </p>
-                          <p>
-                            Speed Over Ground: {ship.timeSeriesData[index].sog}{" "}
-                            knots
-                          </p>
-                          <p>
-                            Course Over Ground: {ship.timeSeriesData[index].cog}
-                            °
-                          </p>
-                          <p>Heading: {ship.timeSeriesData[index].hdg}°</p>
-                          <p>
-                            Rudder Angle:{" "}
-                            {ship.timeSeriesData[index].rudderAngle}°
-                          </p>
-                        </>
-                      )}
-                    </div>
-                  </Popup>
-                </Marker>
-              )
-          )}
+          {hasPath &&
+            ship.path.map(
+              (point, index) =>
+                point &&
+                point.length === 2 && (
+                  <Marker
+                    key={`point-${index}`}
+                    position={point}
+                    icon={createPinIcon()}
+                    zIndexOffset={500}
+                    opacity={index === currentTimeIndex ? 1 : 0.5}
+                  >
+                    <Popup>
+                      <div className="text-gray-900">
+                        <h3 className="font-bold">Route Point {index + 1}</h3>
+                        <p>{ship.name}</p>
+                        <p>
+                          Position: {point[0].toFixed(4)}°N,{" "}
+                          {point[1].toFixed(4)}
+                          °E
+                        </p>
+                        {ship.timeSeriesData?.[index] && (
+                          <>
+                            <p>
+                              Time:{" "}
+                              {new Date(
+                                ship.timeSeriesData[index].timestamp
+                              ).toLocaleString()}
+                            </p>
+                            <p>
+                              Wind Speed:{" "}
+                              {ship.timeSeriesData[index].wind_speed} knots
+                            </p>
+                            <p>
+                              Fan Speed: {ship.timeSeriesData[index].fan_speed}
+                            </p>
+                            <p>
+                              Wind Direction:{" "}
+                              {ship.timeSeriesData[index].windDirection}°
+                            </p>
+                            <p>
+                              Speed Over Ground:{" "}
+                              {ship.timeSeriesData[index].sog} knots
+                            </p>
+                            <p>
+                              Course Over Ground:{" "}
+                              {ship.timeSeriesData[index].cog}°
+                            </p>
+                            <p>Heading: {ship.timeSeriesData[index].hdg}°</p>
+                            <p>
+                              Rudder Angle:{" "}
+                              {ship.timeSeriesData[index].rudderAngle}°
+                            </p>
+                          </>
+                        )}
+                      </div>
+                    </Popup>
+                  </Marker>
+                )
+            )}
 
           {/* Path Line */}
-          {ship.path?.length > 1 && (
+          {hasPath && ship.path.length > 1 && (
             <Polyline
               positions={ship.path}
               color={ship.color}

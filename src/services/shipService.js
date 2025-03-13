@@ -71,12 +71,62 @@ export const shipService = {
         // Filter out any null responses
         const validShips = ships.filter((ship) => ship !== null);
 
-        if (validShips.length === 0) {
-          throw new Error("No valid ship data received from API");
-        }
+        // Create a map of IMO numbers that have data
+        const shipsWithDataByImo = {};
+        validShips.forEach((ship) => {
+          shipsWithDataByImo[ship.imo] = true;
+        });
 
-        console.log(`Successfully fetched ${validShips.length} ships from API`);
-        return validShips;
+        // Create placeholder ships for IMO numbers that don't have data
+        const placeholderShips = imoNumbers
+          .filter((imo) => !shipsWithDataByImo[imo])
+          .map((imo, index) => {
+            // Get the correct name based on IMO number
+            let shipName;
+            if (imo === "9996903") {
+              shipName = "Amadeus Saffier";
+            } else if (imo === "9512331") {
+              shipName = "NBA Magritte";
+            } else if (imo === "999690") {
+              shipName = "Amadeus";
+            } else {
+              shipName = `Ship ${imo}`;
+            }
+
+            return {
+              id: 10000 + index, // Ensure unique ID that won't conflict with real ships
+              name: shipName,
+              imo: imo,
+              position: { latitude: 52.3708, longitude: 4.8958 },
+              path: [],
+              timeSeriesData: [],
+              statistics: {
+                wind_speed: { avg: 0, min: 0, max: 0 },
+                fan_speed: { avg: 0, min: 0, max: 0 },
+              },
+              status: "Unknown",
+              type: "Unknown",
+              destination: "Unknown",
+              eta: "Unknown",
+              color: "#6366f1",
+              hasData: false,
+            };
+          });
+
+        // Combine valid ships with placeholder ships
+        const allShips = [...validShips, ...placeholderShips];
+
+        // Ensure each ship has a unique ID
+        const uniqueShips = allShips.map((ship, index) => ({
+          ...ship,
+          id: ship.id || index + 1, // Use existing ID or create a new one based on index
+          hasData: ship.hasData !== undefined ? ship.hasData : true, // Mark ships with data
+        }));
+
+        console.log(
+          `Successfully fetched ${uniqueShips.length} ships (${validShips.length} with data, ${placeholderShips.length} placeholders)`
+        );
+        return uniqueShips;
       } catch (error) {
         // In live mode, we propagate the error instead of falling back to mock data
         console.error("Failed to fetch ships:", error);
