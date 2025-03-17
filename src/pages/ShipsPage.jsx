@@ -142,17 +142,31 @@ const ShipsPage = () => {
     // Clear any existing error
     setError(null);
 
-    // If the ship has no data, show a message
-    if (!newSelectedShip.hasData) {
-      setError(
-        `No data available for ${newSelectedShip.name} (IMO: ${newSelectedShip.imo}). Please try another ship or date range.`
-      );
-      return;
-    }
+    // Special case for NBA Magritte (IMO: 9512331)
+    if (newSelectedShip.imo === "9512331") {
+      // Set specific date range for NBA Magritte
+      const nbaStartDate = new Date(1732669200000);
+      const nbaEndDate = new Date(1732845600000);
+      setStartDate(nbaStartDate);
+      setEndDate(nbaEndDate);
 
-    // If we have a date range and we're not in mock mode, fetch new data
-    if (startDate && endDate && !isMockMode) {
-      fetchShipData(newSelectedShip.imo, startDate, endDate);
+      // If we're not in mock mode, fetch new data with these specific dates
+      if (!isMockMode) {
+        fetchShipData(newSelectedShip.imo, nbaStartDate, nbaEndDate);
+      }
+    } else {
+      // If the ship has no data, show a message
+      if (!newSelectedShip.hasData) {
+        setError(
+          `No data available for ${newSelectedShip.name} (IMO: ${newSelectedShip.imo}). Please try another ship or date range.`
+        );
+        return;
+      }
+
+      // If we have a date range and we're not in mock mode, fetch new data
+      if (startDate && endDate && !isMockMode) {
+        fetchShipData(newSelectedShip.imo, startDate, endDate);
+      }
     }
   };
 
@@ -207,6 +221,9 @@ const ShipsPage = () => {
         prevShips.map((ship) => (ship.imo === imo ? updatedShip : ship))
       );
       setSelectedShip(updatedShip);
+
+      // Reset current time index to 0 when new data is loaded
+      setCurrentTimeIndex(0);
     } catch (err) {
       console.error(`Error fetching data for IMO ${imo}:`, err);
       setError(
@@ -221,10 +238,17 @@ const ShipsPage = () => {
   const handleTimeSliderChange = (value) => {
     if (!selectedShip?.timeSeriesData?.length) return;
 
-    const index = Math.floor(
-      (value / 100) * (selectedShip.timeSeriesData.length - 1)
-    );
-    setCurrentTimeIndex(index);
+    // Calculate the exact index based on the percentage value
+    const maxIndex = selectedShip.timeSeriesData.length - 1;
+    const exactIndex = (value / 100) * maxIndex;
+
+    // Round to the nearest index to ensure precise positioning
+    const index = Math.round(exactIndex);
+
+    // Ensure index is within bounds
+    const boundedIndex = Math.max(0, Math.min(index, maxIndex));
+
+    setCurrentTimeIndex(boundedIndex);
   };
 
   // Handle date range changes

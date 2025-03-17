@@ -145,93 +145,63 @@ export const shipDataService = {
   },
 
   // Transform API data to application format with better error handling
-  transformShipData: (apiData) => {
+  transformShipData: (shipData) => {
     try {
-      if (!apiData || typeof apiData !== "object") {
-        throw new Error("Invalid API data received");
+      if (!shipData) {
+        console.warn("Invalid ship data format received");
+        return null;
       }
 
-      const {
-        imo,
-        name,
-        results_aggregated = {},
-        results_timed = [],
-        shipData = {}, // Additional ship data from API
-      } = apiData;
+      const { imo, name, results_meta, results_aggregated, results_timed } =
+        shipData;
 
-      // Validate required fields
       if (!imo || !name) {
-        throw new Error("Missing required fields in API data");
+        console.warn("Missing required ship data fields (IMO or name)");
+        return null;
       }
 
-      // Extract aggregated statistics
-      const statistics_min = results_aggregated.aggregation_min || {};
-      const statistics_max = results_aggregated.aggregation_max || {};
-      const statistics_avg = results_aggregated.aggregation_avg || {};
+      // Extract time series data
+      const timeSeriesData = results_timed
+        ? results_timed.map((point) => {
+            const shipDataPoint = point.shipData || {};
+            const sailDataPoint = point.sailData?.[0] || {};
 
-      // Extract location data from API if available
-      // Since shipData is empty in the API response, we'll use default positions
-      // but generate a more realistic path based on timestamps
-      let shipPosition = { latitude: 52.371, longitude: 4.895 }; // Default position (Amsterdam)
-      let shipPath = [];
+            return {
+              timestamp: point.timestamp,
+              wind_speed: shipDataPoint.windSpeed || 0,
+              fan_speed: sailDataPoint.fanSpeed || 0,
+              windDirection: shipDataPoint.windDirection || 0,
+              sog: shipDataPoint.sog || 0, // Speed Over Ground
+              cog: shipDataPoint.cog || 0, // Course Over Ground
+              hdg: shipDataPoint.hdg || 0, // Heading
+              rudderAngle: shipDataPoint.rudderAngle || 0,
+              latitude: shipDataPoint.location?.latitude,
+              longitude: shipDataPoint.location?.longitude,
+            };
+          })
+        : [];
 
-      // Use a specific path for IMO 9996903
-      if (imo === "9996903") {
-        shipPath = [
-          [52.3702, 4.8952], // Amsterdam
-          [52.422, 4.58], // Haarlem
-          [52.4632, 4.5552], // Beverwijk
-          [52.5, 4.2], // North Sea
-          [52.45, 3.9], // North Sea
-          [52.2, 3.7], // North Sea
-          [51.99, 3.8], // North Sea
-          [51.9581, 4.0494], // Hoek van Holland
-          [51.9225, 4.4792], // Rotterdam
-        ];
+      // Generate path from time series data locations
+      const path = timeSeriesData
+        .filter((point) => point.latitude && point.longitude)
+        .map((point) => [point.latitude, point.longitude]);
 
-        // Set the current position to the last point in the path
-        shipPosition = {
-          latitude: shipPath[shipPath.length - 1][0],
-          longitude: shipPath[shipPath.length - 1][1],
-        };
-      }
-      // Generate a path based on timestamps if we have time series data
-      else if (results_timed && results_timed.length > 0) {
-        // Sort time series data by timestamp
-        const sortedTimeSeries = [...results_timed].sort(
-          (a, b) => a.timestamp - b.timestamp
+      // Get the latest position from time series data or use a default
+      let shipPosition = { latitude: 52.3708, longitude: 4.8958 }; // Default to Amsterdam
+
+      if (timeSeriesData.length > 0) {
+        // Find the latest point with valid coordinates
+        const validPoints = timeSeriesData.filter(
+          (point) => point.latitude && point.longitude
         );
 
-        // Generate a path that changes slightly for each timestamp
-        // This simulates ship movement over time
-        shipPath = sortedTimeSeries.map((point, index) => {
-          // Create a small variation based on the index
-          const latOffset = (index * 0.01) % 0.2;
-          const lonOffset = (index * 0.015) % 0.3;
-
-          // Alternate between adding and subtracting to create a zigzag path
-          const lat =
-            shipPosition.latitude + (index % 2 === 0 ? latOffset : -latOffset);
-          const lon =
-            shipPosition.longitude + (index % 2 === 0 ? lonOffset : -lonOffset);
-
-          return [lat, lon];
-        });
-
-        // Use the last position as the current ship position
-        if (shipPath.length > 0) {
-          const lastPoint = shipPath[shipPath.length - 1];
-          shipPosition = { latitude: lastPoint[0], longitude: lastPoint[1] };
+        if (validPoints.length > 0) {
+          const latestPoint = validPoints[validPoints.length - 1];
+          shipPosition = {
+            latitude: latestPoint.latitude,
+            longitude: latestPoint.longitude,
+          };
         }
-      } else {
-        // If no time series data, use default path
-        shipPath = [
-          [shipPosition.latitude - 0.1, shipPosition.longitude - 0.1],
-          [shipPosition.latitude - 0.05, shipPosition.longitude - 0.05],
-          [shipPosition.latitude, shipPosition.longitude],
-          [shipPosition.latitude + 0.05, shipPosition.longitude + 0.05],
-          [shipPosition.latitude + 0.1, shipPosition.longitude + 0.1],
-        ];
       }
 
       // Determine ship type based on IMO or name if not provided by API
@@ -264,50 +234,6 @@ export const shipDataService = {
         shipData.eta ||
         new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split("T")[0];
 
-      // Transform time series data
-      const timeSeriesData = results_timed.map((point, index) => {
-        // Get the first sail data if available
-        const sailData =
-          point.sailData && point.sailData.length > 0
-            ? point.sailData[0]
-            : { windSpeed: 0, windAngle: 0, fanSpeed: 0 };
-
-        // Get ship data if available, otherwise use generated position
-        const pointShipData = point.shipData || {};
-
-        // Use generated location for this point in the path
-        const location =
-          pointShipData.location ||
-          (shipPath[index]
-            ? {
-                latitude: shipPath[index][0],
-                longitude: shipPath[index][1],
-              }
-            : {
-                latitude: shipPosition.latitude,
-                longitude: shipPosition.longitude,
-              });
-
-        // Generate some realistic navigation data based on the index
-        const sog = 8 + Math.sin(index * 0.5) * 2; // Speed between 6-10 knots
-        const cog = (45 + index * 5) % 360; // Course changing gradually
-        const hdg = cog + Math.sin(index * 0.3) * 10; // Heading close to course with some variation
-        const rudderAngle = Math.sin(index * 0.7) * 15; // Rudder angle between -15 and 15 degrees
-
-        return {
-          timestamp: point.timestamp,
-          wind_speed: sailData.windSpeed || 0,
-          fan_speed: sailData.fanSpeed || 0,
-          windAngle: sailData.windAngle || 0,
-          location: location,
-          rudderAngle: pointShipData.rudderAngle || rudderAngle,
-          sog: pointShipData.sog || sog,
-          cog: pointShipData.cog || cog,
-          hdg: pointShipData.hdg || hdg,
-          windDirection: sailData.windAngle || 0,
-        };
-      });
-
       // Generate a color based on the ship's IMO
       const generateColor = (imo) => {
         const colors = [
@@ -330,18 +256,18 @@ export const shipDataService = {
         imo,
         statistics: {
           wind_speed: {
-            avg: statistics_avg.wind_speed || 0,
-            max: statistics_max.wind_speed || 0,
-            min: statistics_min.wind_speed || 0,
+            avg: results_aggregated.aggregation_avg.wind_speed || 0,
+            max: results_aggregated.aggregation_max.wind_speed || 0,
+            min: results_aggregated.aggregation_min.wind_speed || 0,
           },
           fan_speed: {
-            avg: statistics_avg.fan_speed || 0,
-            max: statistics_max.fan_speed || 0,
-            min: statistics_min.fan_speed || 0,
+            avg: results_aggregated.aggregation_avg.fan_speed || 0,
+            max: results_aggregated.aggregation_max.fan_speed || 0,
+            min: results_aggregated.aggregation_min.fan_speed || 0,
           },
         },
         timeSeriesData,
-        path: shipPath,
+        path: path,
         position: shipPosition,
         type: shipType,
         status: shipStatus,

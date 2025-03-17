@@ -166,6 +166,19 @@ export const shipService = {
         return mockShip || null;
       }
 
+      // Special case for NBA Magritte (IMO: 9512331)
+      if (imo === "9512331") {
+        console.log("Using specific time range for NBA Magritte");
+        // Override with specific timestamps for this ship
+        startTime = 1732669200000; // milliseconds
+        endTime = 1732845600000; // milliseconds
+      } else if (imo === "9996903") {
+        console.log("Using specific time range for Amadeus Saffier");
+        // Override with specific timestamps for this ship
+        startTime = 1741281633; // milliseconds
+        endTime = 1741317363; // milliseconds
+      }
+
       // Convert dates to timestamps if they're not already
       const startTimestamp =
         typeof startTime === "number"

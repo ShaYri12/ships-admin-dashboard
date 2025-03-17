@@ -76,6 +76,20 @@ const ShipMap = ({ ship, currentTimeIndex, onTimeChange }) => {
   const hasData = ship.timeSeriesData && ship.timeSeriesData.length > 0;
   const hasPath = ship.path && ship.path.length > 0;
 
+  // Get current position based on time index
+  const getCurrentPosition = () => {
+    if (hasData && ship.timeSeriesData[currentTimeIndex]) {
+      const currentPoint = ship.timeSeriesData[currentTimeIndex];
+      if (currentPoint.latitude && currentPoint.longitude) {
+        return [currentPoint.latitude, currentPoint.longitude];
+      }
+    }
+    // Fallback to ship's default position
+    return [ship.position.latitude, ship.position.longitude];
+  };
+
+  const currentPosition = getCurrentPosition();
+
   return (
     <div className="bg-gray-800 bg-opacity-50 backdrop-blur-md overflow-hidden shadow-lg rounded-xl border border-gray-700 p-4 mb-8">
       <h2 className="text-xl font-semibold mb-4">Ship Location & Route</h2>
@@ -94,15 +108,13 @@ const ShipMap = ({ ship, currentTimeIndex, onTimeChange }) => {
       <div className="h-[400px] rounded-lg overflow-hidden">
         <style>{iconStyle}</style>
         <MapContainer
-          center={[ship.position.latitude, ship.position.longitude]}
+          center={currentPosition}
           zoom={5}
           style={{ height: "100%", width: "100%" }}
           minZoom={2}
           ref={mapRef}
         >
-          <MapController
-            center={[ship.position.latitude, ship.position.longitude]}
-          />
+          <MapController center={currentPosition} />
           {/* Land layer */}
           <TileLayer
             url="https://cartodb-basemaps-{s}.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png"
@@ -116,7 +128,7 @@ const ShipMap = ({ ship, currentTimeIndex, onTimeChange }) => {
 
           {/* Current Position with Ship Icon */}
           <Marker
-            position={[ship.position.latitude, ship.position.longitude]}
+            position={currentPosition}
             icon={createShipIcon()}
             zIndexOffset={1000}
           >
@@ -126,28 +138,62 @@ const ShipMap = ({ ship, currentTimeIndex, onTimeChange }) => {
                 <p>IMO: {ship.imo}</p>
                 <p>Status: {ship.status}</p>
                 <p>
-                  Position: {ship.position.latitude.toFixed(4)}°N,{" "}
-                  {ship.position.longitude.toFixed(4)}°E
+                  Position: {currentPosition[0].toFixed(4)}°N,{" "}
+                  {currentPosition[1].toFixed(4)}°E
                 </p>
-                <p>
-                  Wind Speed: {ship.statistics?.wind_speed?.avg || "N/A"} knots
-                </p>
-                <p className="text-xs text-gray-600">
-                  (min: {ship.statistics?.wind_speed?.min || "N/A"}, max:{" "}
-                  {ship.statistics?.wind_speed?.max || "N/A"})
-                </p>
-                <p>Fan Speed: {ship.statistics?.fan_speed?.avg || "N/A"}</p>
-                <p className="text-xs text-gray-600">
-                  (min: {ship.statistics?.fan_speed?.min || "N/A"}, max:{" "}
-                  {ship.statistics?.fan_speed?.max || "N/A"})
-                </p>
+                {hasData && ship.timeSeriesData[currentTimeIndex] && (
+                  <>
+                    <p>
+                      Time:{" "}
+                      {new Date(
+                        ship.timeSeriesData[currentTimeIndex].timestamp
+                      ).toLocaleString()}
+                    </p>
+                    <p>
+                      Wind Speed:{" "}
+                      {ship.timeSeriesData[currentTimeIndex].wind_speed} knots
+                    </p>
+                    <p>
+                      Fan Speed:{" "}
+                      {ship.timeSeriesData[currentTimeIndex].fan_speed}
+                    </p>
+                    <p>
+                      Wind Direction:{" "}
+                      {ship.timeSeriesData[currentTimeIndex].windDirection}°
+                    </p>
+                    <p>
+                      Speed Over Ground:{" "}
+                      {ship.timeSeriesData[currentTimeIndex].sog} knots
+                    </p>
+                    <p>
+                      Course Over Ground:{" "}
+                      {ship.timeSeriesData[currentTimeIndex].cog}°
+                    </p>
+                    <p>Heading: {ship.timeSeriesData[currentTimeIndex].hdg}°</p>
+                  </>
+                )}
+                {!hasData && (
+                  <>
+                    <p>
+                      Wind Speed: {ship.statistics?.wind_speed?.avg || "N/A"}{" "}
+                      knots
+                    </p>
+                    <p className="text-xs text-gray-600">
+                      (min: {ship.statistics?.wind_speed?.min || "N/A"}, max:{" "}
+                      {ship.statistics?.wind_speed?.max || "N/A"})
+                    </p>
+                    <p>Fan Speed: {ship.statistics?.fan_speed?.avg || "N/A"}</p>
+                    <p className="text-xs text-gray-600">
+                      (min: {ship.statistics?.fan_speed?.min || "N/A"}, max:{" "}
+                      {ship.statistics?.fan_speed?.max || "N/A"})
+                    </p>
+                    <p className="text-yellow-600 font-semibold mt-2">
+                      No time series data available
+                    </p>
+                  </>
+                )}
                 <p>Destination: {ship.destination}</p>
                 <p>ETA: {ship.eta}</p>
-                {!hasData && (
-                  <p className="text-yellow-600 font-semibold mt-2">
-                    No time series data available
-                  </p>
-                )}
               </div>
             </Popup>
           </Marker>
@@ -202,10 +248,6 @@ const ShipMap = ({ ship, currentTimeIndex, onTimeChange }) => {
                               {ship.timeSeriesData[index].cog}°
                             </p>
                             <p>Heading: {ship.timeSeriesData[index].hdg}°</p>
-                            <p>
-                              Rudder Angle:{" "}
-                              {ship.timeSeriesData[index].rudderAngle}°
-                            </p>
                           </>
                         )}
                       </div>

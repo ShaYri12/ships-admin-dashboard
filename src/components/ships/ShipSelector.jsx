@@ -24,7 +24,7 @@ const ShipSelector = ({ ships, selectedShip, onShipChange }) => {
             value={ship.id}
             className={!ship.hasData ? "text-gray-500" : ""}
           >
-            {ship.name} (IMO: {ship.imo}) {!ship.hasData && "(No Data)"}
+            {ship.name} (IMO: {ship.imo}) {!ship.hasData && ""}
           </option>
         ))}
       </select>
