@@ -400,9 +400,6 @@ const ShipsPage = () => {
                       disabled={!selectedShip?.timeSeriesData?.length}
                     />
                   </div>
-                  <div className="text-sm text-white whitespace-nowrap">
-                    Current Time: {currentTimeDisplay}
-                  </div>
                 </div>
 
                 {/* Ship Details */}

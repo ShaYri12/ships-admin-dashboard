@@ -1,13 +1,27 @@
-import React from "react";
+import React, { useMemo, useEffect } from "react";
 import {
   MapContainer,
   TileLayer,
   Marker,
   Popup,
   Polyline,
+  useMap,
 } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import { createShipIcon, createPinIcon, iconStyle } from "./MapIcons";
+
+// Map controller component to update view when ships change
+const MapController = ({ center, zoom }) => {
+  const map = useMap();
+
+  useEffect(() => {
+    if (center && map) {
+      map.setView(center, zoom);
+    }
+  }, [center, zoom, map]);
+
+  return null;
+};
 
 const DashboardMap = ({
   ships,
@@ -17,6 +31,94 @@ const DashboardMap = ({
   startDate,
   endDate,
 }) => {
+  // Calculate the center point based on all ship positions
+  const { mapCenter, mapZoom, shipsWithPosition } = useMemo(() => {
+    // Filter out ships without position data
+    const validShips = ships.filter(
+      (ship) =>
+        ship.position &&
+        typeof ship.position.latitude === "number" &&
+        typeof ship.position.longitude === "number"
+    );
+
+    if (validShips.length === 0) {
+      // Default center if no valid ships
+      return {
+        mapCenter: [20, 0],
+        mapZoom: 2,
+        shipsWithPosition: [],
+      };
+    }
+
+    // If only one ship, center on that ship
+    if (validShips.length === 1) {
+      return {
+        mapCenter: [
+          validShips[0].position.latitude,
+          validShips[0].position.longitude,
+        ],
+        mapZoom: 5,
+        shipsWithPosition: validShips,
+      };
+    }
+
+    // For multiple ships, calculate the bounding box
+    let minLat = 90,
+      maxLat = -90,
+      minLng = 180,
+      maxLng = -180;
+
+    validShips.forEach((ship) => {
+      const lat = ship.position.latitude;
+      const lng = ship.position.longitude;
+
+      minLat = Math.min(minLat, lat);
+      maxLat = Math.max(maxLat, lat);
+      minLng = Math.min(minLng, lng);
+      maxLng = Math.max(maxLng, lng);
+
+      // Also check path points if available
+      if (ship.path && ship.path.length > 0) {
+        ship.path.forEach((point) => {
+          if (point && point.length === 2) {
+            minLat = Math.min(minLat, point[0]);
+            maxLat = Math.max(maxLat, point[0]);
+            minLng = Math.min(minLng, point[1]);
+            maxLng = Math.max(maxLng, point[1]);
+          }
+        });
+      }
+    });
+
+    // Calculate center of the bounding box
+    const centerLat = (minLat + maxLat) / 2;
+    const centerLng = (minLng + maxLng) / 2;
+
+    // Calculate appropriate zoom level based on the bounding box size
+    // This is a simple approximation, might need adjustment
+    const latDiff = Math.abs(maxLat - minLat);
+    const lngDiff = Math.abs(maxLng - minLng);
+    const maxDiff = Math.max(latDiff, lngDiff);
+
+    let zoom = 13; // Max zoom
+    if (maxDiff > 45) zoom = 1; // Global view
+    else if (maxDiff > 20) zoom = 2; // Continental view
+    else if (maxDiff > 10) zoom = 3; // Country view
+    else if (maxDiff > 5) zoom = 4; // Region view
+    else if (maxDiff > 2) zoom = 5; // Area view
+    else if (maxDiff > 1) zoom = 6; // City view
+    else if (maxDiff > 0.5) zoom = 7;
+    else if (maxDiff > 0.1) zoom = 9;
+    else if (maxDiff > 0.05) zoom = 10;
+    else if (maxDiff > 0.01) zoom = 12;
+
+    return {
+      mapCenter: [centerLat, centerLng],
+      mapZoom: zoom,
+      shipsWithPosition: validShips,
+    };
+  }, [ships]);
+
   // Format date for display
   const formatDate = (date) => {
     if (!date) return "";
@@ -40,12 +142,14 @@ const DashboardMap = ({
       <div className="h-[400px] rounded-lg overflow-hidden">
         <style>{iconStyle}</style>
         <MapContainer
-          center={[40, -50]}
-          zoom={3}
+          center={mapCenter}
+          zoom={mapZoom}
           style={{ height: "100%", width: "100%" }}
-          minZoom={2}
+          minZoom={1.5}
           ref={mapRef}
         >
+          <MapController center={mapCenter} zoom={mapZoom} />
+
           {/* Land layer */}
           <TileLayer
             url="https://cartodb-basemaps-{s}.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png"
@@ -58,7 +162,7 @@ const DashboardMap = ({
           />
 
           {/* Ship markers and routes */}
-          {ships.map((ship) => (
+          {shipsWithPosition.map((ship) => (
             <React.Fragment key={ship.id}>
               {/* Start Position Pin */}
               {ship.path?.length > 0 && (

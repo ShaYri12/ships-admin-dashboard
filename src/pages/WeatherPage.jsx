@@ -251,7 +251,7 @@ const WeatherPage = () => {
   return (
     <div className="p-8">
       <div className="max-w-7xl mx-auto">
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center justify-between flex-wrap gap-4 mb-8">
           <h1 className="text-3xl font-bold">Weather Conditions</h1>
           <select
             className="bg-gray-800 border border-gray-700 rounded-lg px-4 py-2"

@@ -1,43 +1,31 @@
 import { BarChart2, Settings, Ship, Cloud, Users, Menu } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Link } from "react-router-dom";
 
 const SIDEBAR_ITEMS = [
-  {
-    name: "Dashboard",
-    icon: BarChart2,
-    color: "#6366f1",
-    href: "/",
-  },
-  {
-    name: "Ships",
-    icon: Ship,
-    color: "#8B5CF6",
-    href: "/ships",
-  },
-  {
-    name: "Users",
-    icon: Users,
-    color: "#EC4899",
-    href: "/users",
-  },
-  {
-    name: "Weather",
-    icon: Cloud,
-    color: "#3B82F6",
-    href: "/weather",
-  },
-  {
-    name: "Settings",
-    icon: Settings,
-    color: "#6EE7B7",
-    href: "/settings",
-  },
+  { name: "Dashboard", icon: BarChart2, color: "#6366f1", href: "/" },
+  { name: "Ships", icon: Ship, color: "#8B5CF6", href: "/ships" },
+  { name: "Users", icon: Users, color: "#EC4899", href: "/users" },
+  { name: "Weather", icon: Cloud, color: "#3B82F6", href: "/weather" },
+  { name: "Settings", icon: Settings, color: "#6EE7B7", href: "/settings" },
 ];
 
 const Sidebar = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+
+  // Close sidebar on mobile devices when the component mounts
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth <= 768) {
+        setIsSidebarOpen(false);
+      }
+    };
+
+    handleResize(); // Run once on mount
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   return (
     <motion.div

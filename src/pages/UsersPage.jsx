@@ -134,9 +134,12 @@ const UsersPage = () => {
   return (
     <div className="flex-1 p-8 overflow-auto">
       <div className="max-w-7xl mx-auto">
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center justify-between flex-wrap gap-4 mb-8">
           <div className="flex items-center">
-            <Users className="w-8 h-8 mr-3" style={{ color: "#6366f1" }} />
+            <Users
+              className="w-8 h-8 mr-3 md:block hidden"
+              style={{ color: "#6366f1" }}
+            />
             <h1 className="text-3xl font-bold">User Management</h1>
           </div>
           <button
@@ -321,85 +324,88 @@ const UsersPage = () => {
 
         {/* Users Table */}
         <div className="bg-gray-800 rounded-lg overflow-hidden">
-          <table className="w-full">
-            <thead>
-              <tr className="bg-gray-700">
-                <th className="px-6 py-3 text-left text-sm font-semibold">
-                  Name
-                </th>
-                <th className="px-6 py-3 text-left text-sm font-semibold">
-                  Email
-                </th>
-                <th className="px-6 py-3 text-left text-sm font-semibold">
-                  System Role
-                </th>
-                <th className="px-6 py-3 text-left text-sm font-semibold">
-                  Ship Role
-                </th>
-                <th className="px-6 py-3 text-left text-sm font-semibold">
-                  Assigned Ship
-                </th>
-                <th className="px-6 py-3 text-left text-sm font-semibold">
-                  Status
-                </th>
-                <th className="px-6 py-3 text-left text-sm font-semibold">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-700">
-              {users.map((user) => (
-                <tr key={user._id} className="hover:bg-gray-700">
-                  <td className="px-6 py-4">{user.name}</td>
-                  <td className="px-6 py-4">{user.email}</td>
-                  <td className="px-6 py-4">
-                    <span
-                      className={`px-2 py-1 rounded-full text-xs ${
-                        user.role === "admin"
-                          ? "bg-purple-500/20 text-purple-500"
-                          : user.role === "seller"
-                          ? "bg-green-500/20 text-green-500"
-                          : "bg-blue-500/20 text-blue-500"
-                      }`}
-                    >
-                      {user.role}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">{user.shipRole}</td>
-                  <td className="px-6 py-4">{user.assignedShip}</td>
-                  <td className="px-6 py-4">
-                    <span
-                      className={`px-2 py-1 rounded-full text-xs ${
-                        user.status === "active"
-                          ? "bg-green-500/20 text-green-500"
-                          : "bg-yellow-500/20 text-yellow-500"
-                      }`}
-                    >
-                      {user.status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">
-                    {user.role !== "admin" && user._id !== currentUser._id && (
-                      <div className="flex space-x-3">
-                        <button
-                          onClick={() => handleEdit(user)}
-                          className="text-blue-500 hover:text-blue-600"
-                        >
-                          <Edit2 className="w-5 h-5" />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(user._id)}
-                          className="text-red-500 hover:text-red-600"
-                        >
-                          <Trash2 className="w-5 h-5" />
-                        </button>
-                      </div>
-                    )}
-                  </td>
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-max">
+              <thead>
+                <tr className="bg-gray-700">
+                  <th className="px-6 py-3 text-left text-sm font-semibold">
+                    Name
+                  </th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold">
+                    Email
+                  </th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold">
+                    System Role
+                  </th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold">
+                    Ship Role
+                  </th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold">
+                    Assigned Ship
+                  </th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold">
+                    Status
+                  </th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold">
+                    Actions
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-gray-700">
+                {users.map((user) => (
+                  <tr key={user._id} className="hover:bg-gray-700">
+                    <td className="px-6 py-4">{user.name}</td>
+                    <td className="px-6 py-4">{user.email}</td>
+                    <td className="px-6 py-4">
+                      <span
+                        className={`px-2 py-1 rounded-full text-xs ${
+                          user.role === "admin"
+                            ? "bg-purple-500/20 text-purple-500"
+                            : user.role === "seller"
+                            ? "bg-green-500/20 text-green-500"
+                            : "bg-blue-500/20 text-blue-500"
+                        }`}
+                      >
+                        {user.role}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">{user.shipRole}</td>
+                    <td className="px-6 py-4">{user.assignedShip}</td>
+                    <td className="px-6 py-4">
+                      <span
+                        className={`px-2 py-1 rounded-full text-xs ${
+                          user.status === "active"
+                            ? "bg-green-500/20 text-green-500"
+                            : "bg-yellow-500/20 text-yellow-500"
+                        }`}
+                      >
+                        {user.status}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      {user.role !== "admin" &&
+                        user._id !== currentUser._id && (
+                          <div className="flex space-x-3">
+                            <button
+                              onClick={() => handleEdit(user)}
+                              className="text-blue-500 hover:text-blue-600"
+                            >
+                              <Edit2 className="md:min-w-5 min-w-4 md:w-5 w-4 md:h-5 h-4" />
+                            </button>
+                            <button
+                              onClick={() => handleDelete(user._id)}
+                              className="text-red-500 hover:text-red-600"
+                            >
+                              <Trash2 className="md:min-w-5 min-w-4 md:w-5 w-4 md:h-5 h-4" />
+                            </button>
+                          </div>
+                        )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>
