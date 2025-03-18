@@ -312,6 +312,18 @@ const ShipsPage = () => {
       ).toLocaleString()
     : "No data";
 
+  const getShipImage = (imo) => {
+    if (imo === "9512331") {
+      return "/MBA-magritte.png";
+    } else if (imo === "9996903") {
+      return "/smadeus-saffier.png";
+    }
+    // Default ship image if no specific one exists
+    return null;
+  };
+
+  const shipImage = getShipImage(selectedShip.imo);
+
   return (
     <div className="p-8">
       <div className="max-w-7xl mx-auto">
@@ -402,8 +414,18 @@ const ShipsPage = () => {
                   </div>
                 </div>
 
+                {/* Ship Image */}
+                {shipImage && (
+                  <div className="max-w-[410px] w-full sm:h-60 h-[200px] overflow-hidden mb-3 rounded-xl">
+                    <img
+                      src={shipImage}
+                      alt={`${selectedShip.name} Ship`}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                )}
                 {/* Ship Details */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 relative z-2">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8 relative z-2">
                   <ShipDetails ship={selectedShip} />
                   <NavigationInfo ship={selectedShip} />
                   <ShipStatistics ship={selectedShip} />

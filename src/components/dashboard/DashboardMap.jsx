@@ -133,11 +133,6 @@ const DashboardMap = ({
     <div className="bg-gray-800 bg-opacity-50 backdrop-blur-md overflow-hidden shadow-lg rounded-xl border border-gray-700 p-4 mb-8">
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-4">
         <h2 className="text-xl font-semibold">Ship Locations & Routes</h2>
-        {startDate && endDate && (
-          <div className="text-sm text-gray-300 mt-1 md:mt-0">
-            Showing data from {formatDate(startDate)} to {formatDate(endDate)}
-          </div>
-        )}
       </div>
       <div className="h-[400px] rounded-lg overflow-hidden">
         <style>{iconStyle}</style>
