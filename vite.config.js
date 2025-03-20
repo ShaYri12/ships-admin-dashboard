@@ -7,8 +7,7 @@ export default defineConfig({
   server: {
     proxy: {
       "/api": {
-        target:
-          "https://qt6hfks5dj.execute-api.eu-central-1.amazonaws.com/development",
+        target: process.env.BASE_URL,
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, ""),
         secure: false,
